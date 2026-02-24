@@ -15,7 +15,7 @@
       "username": "admin",
       "password": "admin",
       "role": "admin",
-      "balance": 1e+22,
+      "balance": 654,
       "portfolio": {
         "AAPL": 2
       },
