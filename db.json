@@ -9,9 +9,9 @@
   "users": [
     {
       "username": "admin",
-      "password": "UsoSTOOPID",
+      "password": "admin",
       "role": "admin",
-      "balance": 5643645,
+      "balance": 1e+22,
       "portfolio": {
         "AAPL": 3
       },
@@ -62,6 +62,10 @@
     {
       "time": "4:39:17 PM",
       "msg": "SYSTEM STATUS CHANGE: true"
+    },
+    {
+      "time": "5:25:55 PM",
+      "msg": "Admin updated user: admin"
     }
   ]
 }
