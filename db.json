@@ -4,6 +4,10 @@
     {
       "ticker": "AAPL",
       "price": 543
+    },
+    {
+      "ticker": "BTC",
+      "price": 567785
     }
   ],
   "users": [
@@ -66,6 +70,10 @@
     {
       "time": "5:25:55 PM",
       "msg": "Admin updated user: admin"
+    },
+    {
+      "time": "5:26:14 PM",
+      "msg": "Admin updated stock: BTC to $567785"
     }
   ]
 }
