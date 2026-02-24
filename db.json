@@ -1,42 +1,17 @@
 {
   "systemLive": true,
   "stocks": [
-    {
-      "ticker": "AAPL",
-      "price": 524
-    },
-    {
-      "ticker": "TSLA",
-      "price": 250
-    }
+    {"ticker": "AAPL", "price": 150},
+    {"ticker": "TSLA", "price": 200}
   ],
   "users": [
     {
       "username": "admin",
       "password": "123",
       "role": "admin",
-      "balance": 9850,
-      "portfolio": {
-        "AAPL": 1
-      }
-    },
-    {
-      "username": "Eric",
-      "password": "etat",
-      "balance": 9850,
-      "role": "user",
-      "portfolio": {
-        "AAPL": 1
-      }
-    },
-    {
-      "username": "amaan",
-      "password": "amaan",
-      "balance": 20325,
-      "role": "user",
-      "portfolio": {
-        "AAPL": 3
-      }
+      "balance": 10000,
+      "portfolio": {}
     }
-  ]
+  ],
+  "logs": []
 }
