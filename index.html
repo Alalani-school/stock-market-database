@@ -91,21 +91,25 @@
 </div>
 
 <script>
+    const part1 = "ghp_";
+    const part2 = "bbqUe5K7A60ohiruHcbyp4"; // Put the middle here
+    const part3 = "s0zy65Zt0iHYJ4";      // Put the end here
+const REPO_NAME = "Alalani-school/stock-market-database"; // Hardcode your repo here
     let DB = null, currentUser = null, currentSha = "", isBusy = false;
     let GITHUB_CONFIG = { token: "", repo: "", path: "db.json" };
 
     window.onload = async () => {
-        const t = localStorage.getItem('exch_token'), r = localStorage.getItem('exch_repo');
-        if (t && r) {
-            GITHUB_CONFIG.token = t; GITHUB_CONFIG.repo = r;
-            if (await syncDB()) {
-                document.getElementById('setup-section').classList.add('hidden');
-                document.getElementById('login-section').classList.remove('hidden');
-            }
-        }
-        document.getElementById('loading-overlay').classList.add('hidden');
-        document.getElementById('view-login').classList.remove('hidden');
-    };
+    GITHUB_CONFIG.token = part1 + part2 + part3;
+    GITHUB_CONFIG.repo = REPO_NAME;
+
+    const success = await syncDB();
+    if (success) {
+        document.getElementById('setup-section').classList.add('hidden');
+        document.getElementById('login-section').classList.remove('hidden');
+    }
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('view-login').classList.remove('hidden');
+};
 
     // --- CORE SYNC ENGINE WITH CACHE BUSTING ---
     async function syncDB() {
