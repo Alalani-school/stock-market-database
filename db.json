@@ -102,6 +102,10 @@
     {
       "time": "6:01:12 PM",
       "msg": "[SECURITY] someone attempted to use DevTools shortcuts"
+    },
+    {
+      "time": "6:01:58 PM",
+      "msg": "[SECURITY] someone opened DevTools window"
     }
   ],
   "announcement": ""
