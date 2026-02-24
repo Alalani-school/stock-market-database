@@ -1,6 +1,29 @@
 {
   "systemLive": true,
-  "stocks": [{"ticker": "AAPL", "price": 150}],
-  "users": [{"username": "admin", "password": "123", "role": "admin", "balance": 10000, "portfolio": {}, "disabled": false}],
-  "logs": []
+  "stocks": [
+    {
+      "ticker": "AAPL",
+      "price": 150
+    },
+    {
+      "ticker": "BTC",
+      "price": 543
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "password": "123",
+      "role": "admin",
+      "balance": 10000,
+      "portfolio": {},
+      "disabled": false
+    }
+  ],
+  "logs": [
+    {
+      "time": "3:57:28 PM",
+      "msg": "Admin updated stock: BTC to $543"
+    }
+  ]
 }
