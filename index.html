@@ -94,6 +94,7 @@
 <script>
     let DB = null, currentUser = null, currentSha = "";
     let GITHUB_CONFIG = { token: "", repo: "", path: "db.json" };
+    let isProcessing = false;
 
     // --- INITIALIZATION ---
     window.onload = async () => {
@@ -174,36 +175,82 @@
         } else { alert("User not found or password incorrect."); }
     }
 
-    function renderUI() {
-        document.getElementById('nav-info').innerText = `💰 $${currentUser.balance.toLocaleString()}`;
-        document.getElementById('market-status').innerText = DB.systemLive ? "🟢" : "🔴 CLOSED";
-        document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
-            <div class="item-row">
-                <span><b>${s.ticker}</b>: $${s.price}</span>
-                <div>
-                    <button class="secondary" style="background:var(--primary)" onclick="trade('${s.ticker}', 'buy')">Buy</button>
-                    <button class="secondary sell" onclick="trade('${s.ticker}', 'sell')">Sell</button>
-                </div>
-            </div>`).join('');
-        const pData = currentUser.portfolio || {};
-        document.getElementById('portfolio-list').innerHTML = Object.entries(pData).filter(([_, q]) => q > 0)
-            .map(([t, q]) => `<div class="item-row"><b>${t}</b> <span>${q} Shares</span></div>`).join('') || "No assets.";
-    }
+async function trade(ticker, type) {
+    if (isProcessing) return; // Prevent clicking while busy
+    if (!DB.systemLive && currentUser.role !== 'admin') return alert("Market Closed");
 
-    async function trade(ticker, type) {
-        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Market Closed");
-        await syncDB();
+    isProcessing = true;
+    renderUI(); // Re-render to show disabled buttons
+
+    try {
+        // 1. Always get the absolute latest data before calculating
+        const freshSync = await syncDB();
+        if (!freshSync) throw new Error("Sync failed");
+
         const stock = DB.stocks.find(s => s.ticker === ticker);
         const user = DB.users.find(u => u.username === currentUser.username);
-        if (type === 'buy' && user.balance >= stock.price) {
-            user.balance -= stock.price;
-            user.portfolio[ticker] = (user.portfolio[ticker] || 0) + 1;
-        } else if (type === 'sell' && user.portfolio[ticker] > 0) {
-            user.balance += stock.price;
-            user.portfolio[ticker] -= 1;
+
+        if (type === 'buy') {
+            if (user.balance >= stock.price) {
+                user.balance -= stock.price;
+                user.portfolio[ticker] = (user.portfolio[ticker] || 0) + 1;
+            } else {
+                alert("Insufficient funds");
+                isProcessing = false;
+                renderUI();
+                return;
+            }
+        } else if (type === 'sell') {
+            if (user.portfolio[ticker] > 0) {
+                user.balance += stock.price;
+                user.portfolio[ticker] -= 1;
+            } else {
+                alert("Nothing to sell");
+                isProcessing = false;
+                renderUI();
+                return;
+            }
         }
-        await pushDB();
+
+        // 2. Push the update to GitHub
+        await pushDB(); 
+        
+    } catch (e) {
+        console.error("Trade error:", e);
+        alert("Transaction failed. Please try again.");
+    } finally {
+        isProcessing = false;
+        renderUI(); // Unlock buttons
     }
+}
+
+function renderUI() {
+    if (!currentUser) return;
+    
+    document.getElementById('nav-info').innerText = `💰 $${currentUser.balance.toLocaleString()}`;
+    document.getElementById('market-status').innerText = DB.systemLive ? "🟢" : "🔴 CLOSED";
+    
+    // Disable buttons if isProcessing is true
+    const btnAttr = isProcessing ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+
+    document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
+        <div class="item-row">
+            <span><b>${s.ticker}</b>: $${s.price}</span>
+            <div>
+                <button class="secondary" ${btnAttr} style="background:var(--primary)" onclick="trade('${s.ticker}', 'buy')">
+                    ${isProcessing ? '...' : 'Buy'}
+                </button>
+                <button class="secondary sell" ${btnAttr} onclick="trade('${s.ticker}', 'sell')">
+                    ${isProcessing ? '...' : 'Sell'}
+                </button>
+            </div>
+        </div>`).join('');
+
+    const pData = currentUser.portfolio || {};
+    document.getElementById('portfolio-list').innerHTML = Object.entries(pData)
+        .filter(([_, q]) => q > 0)
+        .map(([t, q]) => `<div class="item-row"><b>${t}</b> <span>${q} Shares</span></div>`).join('') || "No assets.";
+}
 
     // --- ADMIN ---
     async function adminUpdateUser() {
