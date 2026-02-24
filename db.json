@@ -1,0 +1,10 @@
+{
+  "users": [
+    {"username": "admin", "password": "123", "balance": 10000, "role": "admin", "portfolio": {}}
+  ],
+  "stocks": [
+    {"ticker": "AAPL", "price": 150},
+    {"ticker": "GOOG", "price": 2800}
+  ],
+  "systemLive": true
+}
