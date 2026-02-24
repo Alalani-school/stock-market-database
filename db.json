@@ -19,6 +19,13 @@
       "portfolio": {
         "AAPL": 1
       }
+    },
+    {
+      "username": "someone",
+      "password": "123",
+      "balance": 5432,
+      "role": "user",
+      "portfolio": {}
     }
   ],
   "logs": [
