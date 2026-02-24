@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BVG Stock Market</title>
+    <title>GitHub Exchange Pro - Stable</title>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --primary: #238636; --danger: #da3633; --accent: #1f6feb; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         .hidden { display: none !important; }
         .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .navbar { display: flex; justify-content: space-between; padding: 15px 25px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        input, select { background: #000; color: white; border: 1px solid var(--border); padding: 10px; margin: 5px 0; border-radius: 5px; width: calc(100% - 22px); }
-        button { padding: 10px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; transition: 0.2s; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        input { background: #000; color: white; border: 1px solid var(--border); padding: 10px; margin: 5px 0; border-radius: 5px; width: calc(100% - 22px); }
+        button { padding: 10px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
         button.secondary { background: #30363d; width: auto; margin: 0; }
         button.sell { background: var(--danger); width: auto; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); }
         #loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; }
-        .log-entry { font-size: 12px; font-family: monospace; padding: 5px; border-bottom: 1px solid #222; color: #8b949e; }
+        .log-entry { font-size: 11px; font-family: monospace; border-bottom: 1px solid #222; padding: 4px; color: #8b949e; }
+        .shutdown-notice { background: var(--danger); color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay"><h2>🏛️ Connecting to Exchange...</h2><p id="load-status">Checking credentials...</p></div>
+<div id="loading-overlay"><h2>Connecting to Exchange...</h2></div>
 
 <div id="view-login" class="container hidden">
     <div class="card" style="max-width: 400px; margin: auto;">
@@ -37,7 +38,7 @@
             <input type="text" id="user-login" placeholder="Username">
             <input type="password" id="pass-login" placeholder="Password">
             <button onclick="handleLogin()">Sign In</button>
-            <button onclick="clearStorage()" class="secondary" style="width:100%; margin-top:10px;">Reset Connection</button>
+            <button onclick="clearStorage()" class="secondary" style="width:100%; margin-top:10px;">Reset API Connection</button>
         </div>
     </div>
 </div>
@@ -54,10 +55,12 @@
     </div>
 
     <div class="container">
+        <div id="market-alert" class="shutdown-notice hidden">⚠️ MARKET SHUTDOWN: TRADING DISABLED</div>
+
         <div id="view-market">
             <div style="display:flex; justify-content: space-between; align-items: center;">
                 <h2>Live Market</h2>
-                <div>Qty: <input type="number" id="trade-qty" value="1" min="1" style="width: 50px; display: inline;"></div>
+                <div>Qty: <input type="number" id="trade-qty" value="1" min="1" style="width: 60px; display: inline;"></div>
             </div>
             <div id="market-list" class="card"></div>
         </div>
@@ -70,19 +73,19 @@
         <div id="view-admin" class="hidden">
             <h2>Admin Control Panel</h2>
             <div class="card">
-                <h3>Transaction Logs</h3>
-                <div id="admin-logs" style="max-height: 200px; overflow-y: auto; background: #000; padding: 10px; border-radius: 5px;"></div>
+                <h3>Global Logs</h3>
+                <div id="admin-logs" style="max-height: 150px; overflow-y: auto; background: #000; padding: 10px; border-radius: 5px;"></div>
             </div>
             <div class="card">
-                <h3>User & Stock Management</h3>
-                <input type="text" id="adm-name" placeholder="Name / Ticker">
-                <input type="number" id="adm-val" placeholder="Budget / Price">
+                <h3>Management</h3>
+                <input type="text" id="adm-name" placeholder="User Name or Stock Ticker">
+                <input type="number" id="adm-val" placeholder="Budget ($) or Price ($)">
                 <div style="display:flex; gap:10px;">
-                    <button onclick="adminAction('user')">Update User</button>
-                    <button onclick="adminAction('stock')">Update Stock</button>
+                    <button onclick="adminAction('user')">Set User Budget</button>
+                    <button onclick="adminAction('stock')">Set Stock Price</button>
                 </div>
             </div>
-            <button class="sell" style="width:100%" onclick="adminToggle()">Toggle Shutdown</button>
+            <button class="sell" style="width:100%" id="shutdown-btn" onclick="adminToggle()">Toggle Shutdown</button>
         </div>
     </div>
 </div>
@@ -104,10 +107,13 @@
         document.getElementById('view-login').classList.remove('hidden');
     };
 
+    // --- CORE SYNC ENGINE WITH CACHE BUSTING ---
     async function syncDB() {
+        // The ?t= timestamp forces GitHub to bypass cache and give us fresh data
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`;
         try {
-            const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
-                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}` }
+            const res = await fetch(url, {
+                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Accept": "application/vnd.github.v3+json" }
             });
             if (!res.ok) return false;
             const data = await res.json();
@@ -120,24 +126,27 @@
 
     async function pushDB(retryCount = 3) {
         isBusy = true; renderUI();
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
-        const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
+        
+        const res = await fetch(url, {
             method: "PUT",
             headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ message: `Trade by ${currentUser?.username || 'Admin'}`, content, sha: currentSha })
+            body: JSON.stringify({ message: "System Update", content, sha: currentSha })
         });
 
         if (res.status === 409 && retryCount > 0) {
-            console.warn("Conflict detected. Retrying...");
+            console.warn("Collision! Retrying sync...");
             await syncDB();
             return await pushDB(retryCount - 1);
         }
         
         isBusy = false;
-        if (res.ok) { await syncDB(); renderUI(); } 
-        else { alert("Database Busy. Try again."); }
+        if (res.ok) { await syncDB(); renderUI(); return true; } 
+        else { alert("Transaction failed. System busy."); return false; }
     }
 
+    // --- UI & TRADING ---
     async function handleLogin() {
         await syncDB();
         const u = document.getElementById('user-login').value, p = document.getElementById('pass-login').value;
@@ -148,15 +157,22 @@
             document.getElementById('view-main').classList.remove('hidden');
             if (found.role === 'admin') document.getElementById('admin-nav').classList.remove('hidden');
             renderUI();
-        } else alert("Fail");
+        } else alert("Invalid Credentials");
     }
 
     function renderUI() {
         if (!currentUser) return;
         document.getElementById('nav-info').innerText = `💰 $${currentUser.balance.toLocaleString()}`;
-        const btnState = isBusy ? "disabled" : "";
+        
+        // Shutdown UI
+        const isOff = !DB.systemLive;
+        document.getElementById('market-alert').classList.toggle('hidden', !isOff);
+        document.getElementById('shutdown-btn').innerText = isOff ? "RE-ENABLE MARKET" : "SHUTDOWN MARKET";
+        
+        // Trading state
+        const canTrade = !isOff || currentUser.role === 'admin';
+        const btnState = (isBusy || !canTrade) ? "disabled" : "";
 
-        // Market
         document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
             <div class="item-row">
                 <span><b>${s.ticker}</b>: $${s.price}</span>
@@ -166,12 +182,10 @@
                 </div>
             </div>`).join('');
 
-        // Portfolio
         const port = currentUser.portfolio || {};
         document.getElementById('portfolio-list').innerHTML = Object.entries(port).filter(([_,q]) => q > 0)
-            .map(([t,q]) => `<div class="item-row"><b>${t}</b> <span>${q} Shares</span></div>`).join('') || "Empty";
+            .map(([t,q]) => `<div class="item-row"><b>${t}</b> <span>${q} Shares</span></div>`).join('') || "No assets.";
 
-        // Admin Logs
         if (currentUser.role === 'admin') {
             document.getElementById('admin-logs').innerHTML = (DB.logs || []).slice().reverse()
                 .map(l => `<div class="log-entry">[${l.time}] ${l.msg}</div>`).join('');
@@ -179,7 +193,9 @@
     }
 
     async function trade(ticker, type) {
-        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Closed");
+        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Market is Shutdown.");
+        if (isBusy) return;
+        
         await syncDB();
         const qty = parseInt(document.getElementById('trade-qty').value) || 1;
         const stock = DB.stocks.find(s => s.ticker === ticker);
@@ -194,14 +210,14 @@
             user.balance += total;
             user.portfolio[ticker] -= qty;
             log(`${user.username} sold ${qty} ${ticker} for $${total}`);
-        } else { return alert("Invalid trade"); }
+        } else { return alert("Invalid Trade Request"); }
+        
         await pushDB();
     }
 
     function log(msg) {
-        const time = new Date().toLocaleTimeString();
         if (!DB.logs) DB.logs = [];
-        DB.logs.push({ time, msg });
+        DB.logs.push({ time: new Date().toLocaleTimeString(), msg });
         if (DB.logs.length > 50) DB.logs.shift();
     }
 
@@ -219,7 +235,12 @@
         await pushDB();
     }
 
-    async function adminToggle() { DB.systemLive = !DB.systemLive; await pushDB(); }
+    async function adminToggle() { 
+        DB.systemLive = !DB.systemLive; 
+        log(`ADMIN toggled shutdown: ${!DB.systemLive}`);
+        await pushDB(); 
+    }
+
     function showView(id) {
         ['view-market', 'view-portfolio', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
