@@ -1,17 +1,30 @@
 {
   "systemLive": true,
   "stocks": [
-    {"ticker": "AAPL", "price": 150},
-    {"ticker": "TSLA", "price": 200}
+    {
+      "ticker": "AAPL",
+      "price": 150
+    },
+    {
+      "ticker": "TSLA",
+      "price": 200
+    }
   ],
   "users": [
     {
       "username": "admin",
       "password": "123",
       "role": "admin",
-      "balance": 10000,
-      "portfolio": {}
+      "balance": 9850,
+      "portfolio": {
+        "AAPL": 1
+      }
     }
   ],
-  "logs": []
+  "logs": [
+    {
+      "time": "3:37:10 PM",
+      "msg": "admin bought 1 AAPL for $150"
+    }
+  ]
 }
