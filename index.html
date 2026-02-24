@@ -118,37 +118,75 @@
 
     // --- DATABASE ENGINE ---
     async function syncDB() {
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
-        try {
-            const res = await fetch(url, { 
-                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Cache-Control": "no-cache" }
-            });
-            if (!res.ok) throw new Error();
-            const data = await res.json();
-            currentSha = data.sha;
-            DB = JSON.parse(atob(data.content));
-            if (currentUser) currentUser = DB.users.find(u => u.username === currentUser.username);
-            return true;
-        } catch (e) {
-            alert("Connection Error: Check your Token and Repo Path.");
+    const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+    try {
+        const res = await fetch(url, { 
+            headers: { 
+                "Authorization": `Bearer ${GITHUB_CONFIG.token}`
+                // REMOVED: "Cache-Control": "no-cache" 
+            }
+        });
+
+        if (!res.ok) {
+            const errorDetails = await res.json();
+            console.error("GitHub API Error:", errorDetails.message);
+            alert("GitHub Error: " + errorDetails.message);
             return false;
         }
+
+        const data = await res.json();
+        currentSha = data.sha;
+        
+        // Decode and handle JSON
+        try {
+            // atob can struggle with newlines, so we clean the string first
+            const decodedContent = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+            DB = JSON.parse(decodedContent);
+        } catch (jsonErr) {
+            console.error("JSON Parse Error:", jsonErr);
+            alert("Error: db.json is not formatted correctly!");
+            return false;
+        }
+
+        if (currentUser) {
+            currentUser = DB.users.find(u => u.username === currentUser.username);
+        }
+        return true;
+    } catch (e) {
+        console.error("CORS or Connection Error:", e);
+        alert("Connection blocked. Check console (F12) for details.");
+        return false;
     }
+}
 
     async function pushDB() {
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
-        const res = await fetch(url, {
-            method: "PUT",
-            headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: "Market Sync",
-                content: btoa(JSON.stringify(DB, null, 2)),
-                sha: currentSha
-            })
-        });
-        if (res.ok) { await syncDB(); renderUI(); }
-    }
+    const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+    
+    // Use UTF-8 friendly base64 encoding
+    const jsonString = JSON.stringify(DB, null, 2);
+    const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
 
+    const res = await fetch(url, {
+        method: "PUT",
+        headers: { 
+            "Authorization": `Bearer ${GITHUB_CONFIG.token}`,
+            "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({
+            message: "Market Update",
+            content: encodedContent,
+            sha: currentSha
+        })
+    });
+
+    if (res.ok) {
+        await syncDB(); // Refresh local data
+        renderUI();
+    } else {
+        const err = await res.json();
+        alert("Save failed: " + err.message);
+    }
+}
     // --- UI & LOGIC ---
     function showView(id) {
         ['view-market', 'view-portfolio', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
