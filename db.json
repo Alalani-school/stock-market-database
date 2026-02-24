@@ -98,6 +98,10 @@
     {
       "time": "6:00:47 PM",
       "msg": "Admin set announcement: What's up fellas!"
+    },
+    {
+      "time": "6:01:12 PM",
+      "msg": "[SECURITY] someone attempted to use DevTools shortcuts"
     }
   ],
   "announcement": "What's up fellas!"
