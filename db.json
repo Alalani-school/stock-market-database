@@ -32,7 +32,11 @@
     {
       "time": "SYSTEM",
       "msg": "Hard Reset Performed"
+    },
+    {
+      "time": "6:31:45 PM",
+      "msg": "Admin set announcement: sup"
     }
   ],
-  "announcement": ""
+  "announcement": "sup"
 }
