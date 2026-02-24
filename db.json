@@ -3,7 +3,7 @@
   "stocks": [
     {
       "ticker": "AAPL",
-      "price": 150
+      "price": 5432
     },
     {
       "ticker": "TSLA",
