@@ -23,9 +23,11 @@
     {
       "username": "Eric",
       "password": "etat",
-      "balance": 10000,
+      "balance": 9850,
       "role": "user",
-      "portfolio": {}
+      "portfolio": {
+        "AAPL": 1
+      }
     }
   ]
 }
