@@ -3,121 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Stock Exchange</title>
+    <title>GitHub Exchange</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .card { background: #161b22; border: 1px solid #30363d; padding: 20px; border-radius: 6px; margin-bottom: 20px; }
-        input, button { padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid #30363d; }
-        input { background: #0d1117; color: white; width: calc(100% - 22px); }
-        button { background: #238636; color: white; cursor: pointer; font-weight: bold; width: 100%; }
-        button:hover { background: #2ea043; }
-        .admin-btn { background: #da3633; }
-        .stock-row { display: flex; justify-content: space-between; border-bottom: 1px solid #30363d; padding: 10px 0; }
-        .status-off { color: #f85149; font-weight: bold; }
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --primary: #238636; --danger: #da3633; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        .hidden { display: none !important; }
+        
+        /* Layout */
+        .navbar { display: flex; justify-content: space-between; padding: 15px 25px; background: var(--card); border-bottom: 1px solid var(--border); }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 25px; border-radius: 8px; margin-bottom: 20px; }
+        
+        /* Forms */
+        input { background: #000; color: white; border: 1px solid var(--border); padding: 12px; width: calc(100% - 26px); margin: 10px 0; border-radius: 5px; }
+        button { padding: 12px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button.secondary { background: #30363d; }
+        button.sell { background: #8b1d1b; margin-left: 5px; }
+        
+        /* UI Elements */
+        .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
+        .portfolio-item { padding: 10px; border-bottom: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>🏛️ BVG Stock Market</h1>
-    
-    <div class="card">
-        <h3>1. Setup & Auth</h3>
-        <input type="password" id="token" placeholder="GitHub Personal Access Token">
-        <input type="text" id="repo" placeholder="username/repo-name">
-        <input type="text" id="adminUser" placeholder="Admin Username">
+<div id="view-login" class="container">
+    <div class="card" style="max-width: 400px; margin: auto;">
+        <h2 style="text-align: center;">🏛️ Login</h2>
+        <input type="password" id="gh-token" placeholder="GitHub PAT (Token)">
+        <input type="text" id="gh-repo" placeholder="username/repo-name">
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <input type="text" id="user-login" placeholder="Username">
+        <input type="password" id="pass-login" placeholder="Password">
+        <button onclick="handleLogin()" style="width: 100%;">Enter Exchange</button>
+    </div>
+</div>
+
+<div id="view-main" class="hidden">
+    <div class="navbar">
+        <span id="nav-user-info" style="font-weight: bold;"></span>
+        <div>
+            <button class="secondary" onclick="showView('view-portfolio')">💼 Portfolio</button>
+            <button id="admin-btn" class="secondary hidden" onclick="showView('view-admin')">⚙️ Admin</button>
+            <button class="secondary" onclick="location.reload()">Logout</button>
+        </div>
     </div>
 
-    <div class="card">
-        <h3>Live Market <span id="sysStatus"></span></h3>
-        <div id="marketList">Connect to see prices...</div>
-        <button onclick="loadData()">Refresh Market</button>
+    <div class="container">
+        <h2>Live Market</h2>
+        <div id="market-list" class="card"></div>
     </div>
+</div>
 
-    <div class="card" style="border-top: 4px solid #da3633;">
-        <h3>Admin Panel</h3>
-        <input type="text" id="targetTicker" placeholder="Ticker (e.g. AAPL)">
-        <input type="number" id="newPrice" placeholder="New Price">
-        <button onclick="updatePrice()">Set Price</button>
-        <hr style="border: 0; border-top: 1px solid #30363d; margin: 15px 0;">
-        <button class="admin-btn" onclick="toggleSystem()">Emergency Shutdown</button>
+<div id="view-portfolio" class="container hidden">
+    <button class="secondary" onclick="showView('view-main')">← Back to Market</button>
+    <div class="card" style="margin-top: 20px;">
+        <h2>Your Assets</h2>
+        <div id="portfolio-list"></div>
+    </div>
+</div>
+
+<div id="view-admin" class="container hidden">
+    <button class="secondary" onclick="showView('view-main')">← Back</button>
+    <div class="card" style="margin-top: 20px; border-top: 4px solid var(--danger);">
+        <h2>Admin Control Center</h2>
+        <div class="admin-group">
+            <h3>Adjust Market</h3>
+            <input type="text" id="adm-ticker" placeholder="Ticker">
+            <input type="number" id="adm-price" placeholder="New Price">
+            <button onclick="adminSetPrice()">Update Price</button>
+        </div>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <button style="background: var(--danger);" onclick="adminShutdown()">Emergency Shutdown</button>
     </div>
 </div>
 
 <script>
+    let DB = null;
+    let currentUser = null;
     let currentSha = "";
 
-    async function fetchFromGithub() {
-        const token = document.getElementById('token').value;
-        const repo = document.getElementById('repo').value;
+    // --- Core Database Engine ---
+    async function syncDB() {
+        const token = document.getElementById('gh-token').value;
+        const repo = document.getElementById('gh-repo').value;
         const url = `https://api.github.com/repos/${repo}/contents/db.json`;
 
-        const response = await fetch(url, {
-            headers: { "Authorization": `token ${token}` }
-        });
-        const data = await response.json();
-        currentSha = data.sha;
-        return JSON.parse(atob(data.content));
-    }
-
-    async function saveToGithub(newData) {
-        const token = document.getElementById('token').value;
-        const repo = document.getElementById('repo').value;
-        const url = `https://api.github.com/repos/${repo}/contents/db.json`;
-
-        const response = await fetch(url, {
-            method: "PUT",
-            headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: "Market Update via Web Dashboard",
-                content: btoa(JSON.stringify(newData, null, 2)),
-                sha: currentSha
-            })
-        });
-
-        if (response.ok) alert("Update Successful!");
-        else alert("Update Failed. Check console.");
-    }
-
-    async function loadData() {
         try {
-            const db = await fetchFromGithub();
-            const list = document.getElementById('marketList');
-            const status = document.getElementById('sysStatus');
-            
-            status.innerHTML = db.systemLive ? "✅" : "<span class='status-off'>OFFLINE</span>";
-            list.innerHTML = db.stocks.map(s => `
-                <div class="stock-row">
-                    <span>${s.ticker}</span>
-                    <span>$${s.price.toLocaleString()}</span>
-                </div>
-            `).join('');
-        } catch (e) { alert("Error loading data. Check token/repo path."); }
-    }
-
-    async function updatePrice() {
-        const ticker = document.getElementById('targetTicker').value.toUpperCase();
-        const price = parseFloat(document.getElementById('newPrice').value);
-        const db = await fetchFromGithub();
-
-        const stock = db.stocks.find(s => s.ticker === ticker);
-        if (stock) {
-            stock.price = price;
-            await saveToGithub(db);
-            loadData();
-        } else {
-            alert("Ticker not found");
+            const res = await fetch(url, { headers: { "Authorization": `token ${token}` }});
+            const data = await res.json();
+            currentSha = data.sha;
+            DB = JSON.parse(atob(data.content));
+            return true;
+        } catch (e) {
+            alert("Connection Failed. Check Token/Repo/Internet.");
+            return false;
         }
     }
 
-    async function toggleSystem() {
-        const db = await fetchFromGithub();
-        db.systemLive = !db.systemLive;
-        await saveToGithub(db);
-        loadData();
+    async function pushDB() {
+        const token = document.getElementById('gh-token').value;
+        const repo = document.getElementById('gh-repo').value;
+        const url = `https://api.github.com/repos/${repo}/contents/db.json`;
+
+        const res = await fetch(url, {
+            method: "PUT",
+            headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: "Market Transaction",
+                content: btoa(JSON.stringify(DB, null, 2)),
+                sha: currentSha
+            })
+        });
+        if (res.ok) { await syncDB(); renderAll(); }
+    }
+
+    // --- Navigation ---
+    function showView(viewId) {
+        ['view-login', 'view-main', 'view-portfolio', 'view-admin'].forEach(v => {
+            document.getElementById(v).classList.add('hidden');
+        });
+        document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    // --- Logic ---
+    async function handleLogin() {
+        const success = await syncDB();
+        if (!success) return;
+
+        const u = document.getElementById('user-login').value;
+        const p = document.getElementById('pass-login').value;
+        
+        const userFound = DB.users.find(x => x.username === u && x.password === p);
+        if (userFound) {
+            currentUser = userFound;
+            document.getElementById('nav-user-info').innerText = `${u} | Balance: $${currentUser.balance.toLocaleString()}`;
+            if (currentUser.role === 'admin') document.getElementById('admin-btn').classList.remove('hidden');
+            renderAll();
+            showView('view-main');
+        } else {
+            alert("Invalid Credentials");
+        }
+    }
+
+    function renderAll() {
+        // Render Market
+        const mList = document.getElementById('market-list');
+        mList.innerHTML = DB.stocks.map(s => `
+            <div class="stock-item">
+                <div><b>${s.ticker}</b>: $${s.price}</div>
+                <div>
+                    <button onclick="trade('${s.ticker}', 'buy')">Buy</button>
+                    <button class="sell" onclick="trade('${s.ticker}', 'sell')">Sell</button>
+                </div>
+            </div>
+        `).join('');
+
+        // Render Portfolio
+        const pList = document.getElementById('portfolio-list');
+        const holdings = currentUser.portfolio || {};
+        pList.innerHTML = Object.keys(holdings).map(ticker => `
+            <div class="portfolio-item">${ticker}: ${holdings[ticker]} shares</div>
+        `).join('') || "No assets yet.";
+    }
+
+    async function trade(ticker, type) {
+        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Market is closed.");
+        
+        const stock = DB.stocks.find(s => s.ticker === ticker);
+        const user = DB.users.find(u => u.username === currentUser.username);
+        
+        if (type === 'buy') {
+            if (user.balance >= stock.price) {
+                user.balance -= stock.price;
+                user.portfolio[ticker] = (user.portfolio[ticker] || 0) + 1;
+            } else { return alert("Insufficient funds"); }
+        } else {
+            if (user.portfolio[ticker] > 0) {
+                user.balance += stock.price;
+                user.portfolio[ticker] -= 1;
+            } else { return alert("You don't own this"); }
+        }
+        
+        currentUser = user;
+        document.getElementById('nav-user-info').innerText = `${user.username} | Balance: $${user.balance.toLocaleString()}`;
+        await pushDB();
+    }
+
+    // --- Admin Commands ---
+    async function adminSetPrice() {
+        const t = document.getElementById('adm-ticker').value.toUpperCase();
+        const p = parseFloat(document.getElementById('adm-price').value);
+        const stock = DB.stocks.find(s => s.ticker === t);
+        if (stock) {
+            stock.price = p;
+            await pushDB();
+        }
+    }
+
+    async function adminShutdown() {
+        DB.systemLive = !DB.systemLive;
+        alert(`Market Live: ${DB.systemLive}`);
+        await pushDB();
     }
 </script>
-
 </body>
 </html>
