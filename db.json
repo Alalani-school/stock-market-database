@@ -1,5 +1,5 @@
 {
-  "systemLive": false,
+  "systemLive": true,
   "stocks": [
     {
       "ticker": "AAPL",
@@ -58,6 +58,10 @@
     {
       "time": "4:39:15 PM",
       "msg": "SYSTEM STATUS CHANGE: false"
+    },
+    {
+      "time": "4:39:17 PM",
+      "msg": "SYSTEM STATUS CHANGE: true"
     }
   ]
 }
