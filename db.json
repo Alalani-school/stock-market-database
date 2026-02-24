@@ -1,22 +1,16 @@
 {
+  "systemLive": true,
+  "stocks": [
+    {"ticker": "AAPL", "price": 150},
+    {"ticker": "TSLA", "price": 250}
+  ],
   "users": [
     {
-      "username": "admin",
-      "password": "123",
-      "balance": 10000,
-      "role": "admin",
+      "username": "admin", 
+      "password": "123", 
+      "role": "admin", 
+      "balance": 10000, 
       "portfolio": {}
     }
-  ],
-  "stocks": [
-    {
-      "ticker": "AAPL",
-      "price": 435
-    },
-    {
-      "ticker": "GOOG",
-      "price": 6453
-    }
-  ],
-  "systemLive": true
+  ]
 }
