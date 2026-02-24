@@ -17,7 +17,7 @@
       "role": "admin",
       "balance": 1e+22,
       "portfolio": {
-        "AAPL": 3
+        "AAPL": 2
       },
       "disabled": false
     },
@@ -90,6 +90,10 @@
     {
       "time": "5:28:19 PM",
       "msg": "SYSTEM STATUS CHANGE: false"
+    },
+    {
+      "time": "5:50:37 PM",
+      "msg": "admin SOLD 1 AAPL"
     }
   ]
 }
