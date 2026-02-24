@@ -15,9 +15,9 @@
       "username": "admin",
       "password": "123",
       "role": "admin",
-      "balance": 9850,
+      "balance": 4418,
       "portfolio": {
-        "AAPL": 1
+        "AAPL": 2
       }
     },
     {
@@ -32,6 +32,10 @@
     {
       "time": "3:37:10 PM",
       "msg": "admin bought 1 AAPL for $150"
+    },
+    {
+      "time": "3:45:13 PM",
+      "msg": "admin bought 1 AAPL for $5432"
     }
   ]
 }
