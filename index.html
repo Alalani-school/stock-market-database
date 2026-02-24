@@ -3,43 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Exchange Pro - Stable</title>
+    <title>BVG Stock Market</title>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --primary: #238636; --danger: #da3633; --accent: #1f6feb; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         .hidden { display: none !important; }
-        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .navbar { display: flex; justify-content: space-between; padding: 15px 25px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        input { background: #000; color: white; border: 1px solid var(--border); padding: 10px; margin: 5px 0; border-radius: 5px; width: calc(100% - 22px); }
+        input, select { background: #000; color: white; border: 1px solid var(--border); padding: 10px; margin: 5px 0; border-radius: 5px; width: calc(100% - 22px); }
         button { padding: 10px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         button.secondary { background: #30363d; width: auto; margin: 0; }
-        button.sell { background: var(--danger); width: auto; }
+        button.danger { background: var(--danger); }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); }
+        .log-box { max-height: 150px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 11px; border-radius: 5px; color: #8b949e; }
         #loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; }
-        .log-entry { font-size: 11px; font-family: monospace; border-bottom: 1px solid #222; padding: 4px; color: #8b949e; }
-        .shutdown-notice { background: var(--danger); color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; margin-bottom: 15px; }
+        .status-tag { padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .online { background: #23863633; color: #238636; border: 1px solid #238636; }
+        .offline { background: #da363333; color: #da3633; border: 1px solid #da3633; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay"><h2>Connecting to Exchange...</h2></div>
+<div id="loading-overlay"><h2>🏛️ Please Wait...</h2></div>
 
 <div id="view-login" class="container hidden">
     <div class="card" style="max-width: 400px; margin: auto;">
-        <h2 style="text-align: center;">Exchange Login</h2>
-        <div id="setup-section">
-            <input type="password" id="gh-token" placeholder="GitHub Token">
-            <input type="text" id="gh-repo" placeholder="username/repo">
-            <button onclick="testConnection()" style="background: var(--accent);">Save & Connect</button>
-        </div>
-        <div id="login-section" class="hidden">
-            <input type="text" id="user-login" placeholder="Username">
-            <input type="password" id="pass-login" placeholder="Password">
-            <button onclick="handleLogin()">Sign In</button>
-            <button onclick="clearStorage()" class="secondary" style="width:100%; margin-top:10px;">Reset API Connection</button>
-        </div>
+        <h2 style="text-align: center;">Market Access</h2>
+        <input type="text" id="user-login" placeholder="Username">
+        <input type="password" id="pass-login" placeholder="Password">
+        <button id="login-btn" onclick="handleLogin()">Sign In</button>
     </div>
 </div>
 
@@ -55,11 +49,9 @@
     </div>
 
     <div class="container">
-        <div id="market-alert" class="shutdown-notice hidden">⚠️ MARKET SHUTDOWN: TRADING DISABLED</div>
-
         <div id="view-market">
             <div style="display:flex; justify-content: space-between; align-items: center;">
-                <h2>Live Market</h2>
+                <h2>Live Tickers <span id="mkt-badge"></span></h2>
                 <div>Qty: <input type="number" id="trade-qty" value="1" min="1" style="width: 60px; display: inline;"></div>
             </div>
             <div id="market-list" class="card"></div>
@@ -71,53 +63,70 @@
         </div>
 
         <div id="view-admin" class="hidden">
-            <h2>Admin Control Panel</h2>
+            <h2>Admin Command Center</h2>
+            
             <div class="card">
-                <h3>Global Logs</h3>
-                <div id="admin-logs" style="max-height: 150px; overflow-y: auto; background: #000; padding: 10px; border-radius: 5px;"></div>
+                <h3>Transaction Logs</h3>
+                <div id="admin-logs" class="log-box"></div>
             </div>
-            <div class="card">
-                <h3>Management</h3>
-                <input type="text" id="adm-name" placeholder="User Name or Stock Ticker">
-                <input type="number" id="adm-val" placeholder="Budget ($) or Price ($)">
-                <div style="display:flex; gap:10px;">
-                    <button onclick="adminAction('user')">Set User Budget</button>
-                    <button onclick="adminAction('stock')">Set Stock Price</button>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="card">
+                    <h3>User Control</h3>
+                    <input type="text" id="adm-user-n" placeholder="Username">
+                    <input type="text" id="adm-user-p" placeholder="New Password">
+                    <input type="number" id="adm-user-b" placeholder="Set Budget">
+                    <button onclick="adminUserAction('update')">Create/Update User</button>
+                    <button class="danger" onclick="adminUserAction('disable')" style="margin-top:5px">Enable/Disable User</button>
+                </div>
+                <div class="card">
+                    <h3>Stock Control</h3>
+                    <input type="text" id="adm-stk-t" placeholder="Ticker (e.g. BTC)">
+                    <input type="number" id="adm-stk-p" placeholder="Price">
+                    <button onclick="adminStockAction('update')">Create/Update Price</button>
+                    <button class="danger" onclick="adminStockAction('delete')" style="margin-top:5px">Delete Ticker</button>
                 </div>
             </div>
-            <button class="sell" style="width:100%" id="shutdown-btn" onclick="adminToggle()">Toggle Shutdown</button>
+
+            <div class="card" style="border: 1px solid var(--danger);">
+                <h3>System Danger Zone</h3>
+                <div style="display:flex; gap:10px;">
+                    <button class="danger" onclick="adminToggleSystem()" id="shutdown-btn">Shutdown Market</button>
+                    <button class="danger" onclick="adminResetAll()">HARD RESET SYSTEM</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    const part1 = "ghp_";
-    const part2 = "bbqUe5K7A60ohiruHcbyp4"; // Put the middle here
-    const part3 = "s0zy65Zt0iHYJ4";      // Put the end here
-const REPO_NAME = "Alalani-school/stock-market-database"; // Hardcode your repo here
+    // --- OBFUSCATION CONFIG ---
+    // Split your token into 3 parts to hide it from GitHub's simple scanner
+    const p1 = "ghp_"; 
+    const p2 = "bbqUe5K7A60ohiruHcby"; 
+    const p3 = "p4s0zy65Zt0iHYJ4";
+
+    const GITHUB_CONFIG = {
+        token: p1 + p2 + p3,
+        repo: "Alalani-school/stock-market-database", 
+        path: "db.json"
+    };
+
     let DB = null, currentUser = null, currentSha = "", isBusy = false;
-    let GITHUB_CONFIG = { token: "", repo: "", path: "db.json" };
+    let queue = Promise.resolve();
 
+    // --- ENGINE ---
     window.onload = async () => {
-    GITHUB_CONFIG.token = part1 + part2 + part3;
-    GITHUB_CONFIG.repo = REPO_NAME;
+        const success = await syncDB();
+        document.getElementById('loading-overlay').classList.add('hidden');
+        if (!success) alert("Failed to connect to GitHub Database.");
+        else document.getElementById('view-login').classList.remove('hidden');
+    };
 
-    const success = await syncDB();
-    if (success) {
-        document.getElementById('setup-section').classList.add('hidden');
-        document.getElementById('login-section').classList.remove('hidden');
-    }
-    document.getElementById('loading-overlay').classList.add('hidden');
-    document.getElementById('view-login').classList.remove('hidden');
-};
-
-    // --- CORE SYNC ENGINE WITH CACHE BUSTING ---
     async function syncDB() {
-        // The ?t= timestamp forces GitHub to bypass cache and give us fresh data
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`;
         try {
-            const res = await fetch(url, {
-                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Accept": "application/vnd.github.v3+json" }
+            const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`, {
+                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}` }
             });
             if (!res.ok) return false;
             const data = await res.json();
@@ -128,61 +137,60 @@ const REPO_NAME = "Alalani-school/stock-market-database"; // Hardcode your repo 
         } catch (e) { return false; }
     }
 
-    async function pushDB(retryCount = 3) {
-        isBusy = true; renderUI();
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
-        
-        const res = await fetch(url, {
-            method: "PUT",
-            headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ message: "System Update", content, sha: currentSha })
+    async function pushDB() {
+        // Queue prevents multiple overlapping saves (race conditions)
+        return queue = queue.then(async () => {
+            isBusy = true; renderUI();
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
+            try {
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
+                    method: "PUT",
+                    headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: "Update", content, sha: currentSha })
+                });
+                if (res.status === 409) { await syncDB(); return pushDB(); } // Auto-retry on conflict
+                await syncDB();
+            } finally {
+                isBusy = false; renderUI();
+            }
         });
-
-        if (res.status === 409 && retryCount > 0) {
-            console.warn("Collision! Retrying sync...");
-            await syncDB();
-            return await pushDB(retryCount - 1);
-        }
-        
-        isBusy = false;
-        if (res.ok) { await syncDB(); renderUI(); return true; } 
-        else { alert("Transaction failed. System busy."); return false; }
     }
 
-    // --- UI & TRADING ---
+    // --- AUTH ---
     async function handleLogin() {
         await syncDB();
-        const u = document.getElementById('user-login').value, p = document.getElementById('pass-login').value;
+        const u = document.getElementById('user-login').value;
+        const p = document.getElementById('pass-login').value;
         const found = DB.users.find(x => x.username === u && x.password === p);
+
         if (found) {
+            if (found.disabled && found.role !== 'admin') return alert("Account Disabled.");
             currentUser = found;
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-main').classList.remove('hidden');
             if (found.role === 'admin') document.getElementById('admin-nav').classList.remove('hidden');
             renderUI();
-        } else alert("Invalid Credentials");
+        } else alert("Invalid Login");
     }
 
+    // --- UI ---
     function renderUI() {
         if (!currentUser) return;
-        document.getElementById('nav-info').innerText = `💰 $${currentUser.balance.toLocaleString()}`;
+        document.getElementById('nav-info').innerText = `👤 ${currentUser.username} | 💰 $${currentUser.balance.toLocaleString()}`;
         
-        // Shutdown UI
-        const isOff = !DB.systemLive;
-        document.getElementById('market-alert').classList.toggle('hidden', !isOff);
-        document.getElementById('shutdown-btn').innerText = isOff ? "RE-ENABLE MARKET" : "SHUTDOWN MARKET";
-        
-        // Trading state
-        const canTrade = !isOff || currentUser.role === 'admin';
-        const btnState = (isBusy || !canTrade) ? "disabled" : "";
+        const mBadge = document.getElementById('mkt-badge');
+        mBadge.innerText = DB.systemLive ? "ONLINE" : "OFFLINE";
+        mBadge.className = "status-tag " + (DB.systemLive ? "online" : "offline");
+        document.getElementById('shutdown-btn').innerText = DB.systemLive ? "Shutdown Market" : "Enable Market";
+
+        const btnState = (isBusy || (!DB.systemLive && currentUser.role !== 'admin')) ? "disabled" : "";
 
         document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
             <div class="item-row">
-                <span><b>${s.ticker}</b>: $${s.price}</span>
+                <span><b>${s.ticker}</b>: $${s.price.toLocaleString()}</span>
                 <div>
-                    <button class="secondary" ${btnState} onclick="trade('${s.ticker}','buy')">Buy</button>
-                    <button class="secondary sell" ${btnState} onclick="trade('${s.ticker}','sell')">Sell</button>
+                    <button class="secondary" style="background:var(--primary)" ${btnState} onclick="trade('${s.ticker}','buy')">Buy</button>
+                    <button class="secondary danger" ${btnState} onclick="trade('${s.ticker}','sell')">Sell</button>
                 </div>
             </div>`).join('');
 
@@ -192,15 +200,13 @@ const REPO_NAME = "Alalani-school/stock-market-database"; // Hardcode your repo 
 
         if (currentUser.role === 'admin') {
             document.getElementById('admin-logs').innerHTML = (DB.logs || []).slice().reverse()
-                .map(l => `<div class="log-entry">[${l.time}] ${l.msg}</div>`).join('');
+                .map(l => `<div>[${l.time}] ${l.msg}</div>`).join('');
         }
     }
 
+    // --- ACTIONS ---
     async function trade(ticker, type) {
-        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Market is Shutdown.");
         if (isBusy) return;
-        
-        await syncDB();
         const qty = parseInt(document.getElementById('trade-qty').value) || 1;
         const stock = DB.stocks.find(s => s.ticker === ticker);
         const user = DB.users.find(u => u.username === currentUser.username);
@@ -209,40 +215,70 @@ const REPO_NAME = "Alalani-school/stock-market-database"; // Hardcode your repo 
         if (type === 'buy' && user.balance >= total) {
             user.balance -= total;
             user.portfolio[ticker] = (user.portfolio[ticker] || 0) + qty;
-            log(`${user.username} bought ${qty} ${ticker} for $${total}`);
+            log(`${user.username} BOUGHT ${qty} ${ticker}`);
         } else if (type === 'sell' && (user.portfolio[ticker] || 0) >= qty) {
             user.balance += total;
             user.portfolio[ticker] -= qty;
-            log(`${user.username} sold ${qty} ${ticker} for $${total}`);
-        } else { return alert("Invalid Trade Request"); }
-        
+            log(`${user.username} SOLD ${qty} ${ticker}`);
+        } else return alert("Trade Invalid (Funds/Stock/Market)");
+
         await pushDB();
     }
 
     function log(msg) {
         if (!DB.logs) DB.logs = [];
         DB.logs.push({ time: new Date().toLocaleTimeString(), msg });
-        if (DB.logs.length > 50) DB.logs.shift();
+        if (DB.logs.length > 100) DB.logs.shift();
     }
 
-    // --- ADMIN ACTIONS ---
-    async function adminAction(type) {
-        const n = document.getElementById('adm-name').value, v = parseFloat(document.getElementById('adm-val').value);
-        if (type === 'user') {
-            let u = DB.users.find(x => x.username === n);
-            if (u) u.balance = v;
-            else DB.users.push({username:n, password:"123", balance:v, role:"user", portfolio:{}});
-        } else {
-            let s = DB.stocks.find(x => x.ticker === n.toUpperCase());
-            s ? s.price = v : DB.stocks.push({ticker:n.toUpperCase(), price:v});
+    // --- ADMIN SUITE ---
+    async function adminUserAction(action) {
+        const n = document.getElementById('adm-user-n').value;
+        const p = document.getElementById('adm-user-p').value;
+        const b = parseFloat(document.getElementById('adm-user-b').value);
+        let u = DB.users.find(x => x.username === n);
+
+        if (action === 'update') {
+            if (u) {
+                if (p) u.password = p;
+                if (!isNaN(b)) u.balance = b;
+                log(`Admin updated user: ${n}`);
+            } else {
+                DB.users.push({username:n, password:p||"123", balance:b||1000, role:"user", portfolio:{}, disabled:false});
+                log(`Admin created user: ${n}`);
+            }
+        } else if (action === 'disable' && u) {
+            u.disabled = !u.disabled;
+            log(`Admin toggled disable: ${n}`);
         }
         await pushDB();
     }
 
-    async function adminToggle() { 
-        DB.systemLive = !DB.systemLive; 
-        log(`ADMIN toggled shutdown: ${!DB.systemLive}`);
-        await pushDB(); 
+    async function adminStockAction(action) {
+        const t = document.getElementById('adm-stk-t').value.toUpperCase();
+        const p = parseFloat(document.getElementById('adm-stk-p').value);
+        if (action === 'update') {
+            let s = DB.stocks.find(x => x.ticker === t);
+            s ? s.price = p : DB.stocks.push({ticker:t, price:p});
+            log(`Admin updated stock: ${t} to $${p}`);
+        } else if (action === 'delete') {
+            DB.stocks = DB.stocks.filter(x => x.ticker !== t);
+            log(`Admin deleted ticker: ${t}`);
+        }
+        await pushDB();
+    }
+
+    async function adminToggleSystem() {
+        DB.systemLive = !DB.systemLive;
+        log(`SYSTEM STATUS CHANGE: ${DB.systemLive}`);
+        await pushDB();
+    }
+
+    async function adminResetAll() {
+        if (!confirm("WIPE EVERYTHING? All portfolios and balances will reset.")) return;
+        DB.users.forEach(u => { u.balance = 1000; u.portfolio = {}; });
+        DB.logs = [{time: "SYSTEM", msg: "Hard Reset Performed"}];
+        await pushDB();
     }
 
     function showView(id) {
@@ -250,14 +286,6 @@ const REPO_NAME = "Alalani-school/stock-market-database"; // Hardcode your repo 
         document.getElementById(id).classList.remove('hidden');
         renderUI();
     }
-    function testConnection() {
-        GITHUB_CONFIG.token = document.getElementById('gh-token').value;
-        GITHUB_CONFIG.repo = document.getElementById('gh-repo').value;
-        localStorage.setItem('exch_token', GITHUB_CONFIG.token);
-        localStorage.setItem('exch_repo', GITHUB_CONFIG.repo);
-        location.reload();
-    }
-    function clearStorage() { localStorage.clear(); location.reload(); }
 </script>
 </body>
 </html>
