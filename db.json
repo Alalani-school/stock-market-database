@@ -9,9 +9,9 @@
   "users": [
     {
       "username": "admin",
-      "password": "123",
+      "password": "admin",
       "role": "admin",
-      "balance": 8371,
+      "balance": 65436543643,
       "portfolio": {
         "AAPL": 3
       },
@@ -42,6 +42,10 @@
     {
       "time": "3:57:46 PM",
       "msg": "admin BOUGHT 1 AAPL"
+    },
+    {
+      "time": "4:36:56 PM",
+      "msg": "Admin updated user: admin"
     }
   ]
 }
