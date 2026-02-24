@@ -94,6 +94,11 @@
     {
       "time": "5:50:37 PM",
       "msg": "admin SOLD 1 AAPL"
+    },
+    {
+      "time": "6:00:47 PM",
+      "msg": "Admin set announcement: What's up fellas!"
     }
-  ]
+  ],
+  "announcement": "What's up fellas!"
 }
