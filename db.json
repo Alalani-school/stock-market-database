@@ -27,7 +27,7 @@
       "balance": 32,
       "role": "user",
       "portfolio": {},
-      "disabled": false
+      "disabled": true
     }
   ],
   "logs": [
