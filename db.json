@@ -36,7 +36,11 @@
     {
       "time": "6:31:45 PM",
       "msg": "Admin set announcement: sup"
+    },
+    {
+      "time": "6:59:31 PM",
+      "msg": "Admin set announcement: yo miller how's it going"
     }
   ],
-  "announcement": "sup"
+  "announcement": "yo miller how's it going"
 }
