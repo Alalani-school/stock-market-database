@@ -26,6 +26,14 @@
       "role": "user",
       "portfolio": {},
       "disabled": false
+    },
+    {
+      "username": "Miller",
+      "password": "test",
+      "balance": 7654765,
+      "role": "user",
+      "portfolio": {},
+      "disabled": false
     }
   ],
   "logs": [
