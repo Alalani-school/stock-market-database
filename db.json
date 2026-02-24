@@ -32,10 +32,10 @@
     {
       "username": "amaan",
       "password": "amaan",
-      "balance": 44294,
+      "balance": 43770,
       "role": "user",
       "portfolio": {
-        "AAPL": 2
+        "AAPL": 3
       }
     }
   ]
