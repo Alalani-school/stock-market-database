@@ -3,31 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BVG Stock Market</title>
+    <title>GitHub Exchange Pro</title>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --primary: #238636; --danger: #da3633; --accent: #1f6feb; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         .hidden { display: none !important; }
-        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 25px; border-radius: 8px; margin-bottom: 20px; }
         .navbar { display: flex; justify-content: space-between; padding: 15px 25px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
         input { background: #000; color: white; border: 1px solid var(--border); padding: 12px; width: calc(100% - 26px); margin: 10px 0; border-radius: 5px; }
-        button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button.secondary { background: #30363d; margin-left: 5px; }
-        button.sell { background: var(--danger); }
-        button.add { background: var(--accent); }
+        button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
+        button.secondary { background: #30363d; width: auto; margin-top: 0; }
+        button.sell { background: var(--danger); width: auto; margin-top: 0; }
         .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
-        .portfolio-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border); }
+        small { color: #8b949e; display: block; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div id="view-login" class="container">
-    <div class="card" style="max-width: 400px; margin: auto; text-align: center;">
-        <h2>🏛️ Stock Market Login</h2>
-        <input type="text" id="user-login" placeholder="Username">
-        <input type="password" id="pass-login" placeholder="Password">
-        <button onclick="handleLogin()" style="width: 100%; margin-top: 10px;">Login</button>
+    <div class="card">
+        <h2 style="text-align: center;">🏛️ Exchange Login</h2>
+        
+        <div id="setup-section">
+            <small>First, connect to your GitHub Repository:</small>
+            <input type="password" id="gh-token" placeholder="GitHub Personal Access Token (ghp_...)">
+            <input type="text" id="gh-repo" placeholder="username/repository-name">
+            <button onclick="testConnection()" style="background: var(--accent);">Connect to Database</button>
+        </div>
+
+        <div id="login-section" class="hidden">
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+            <small>Connected! Enter your credentials:</small>
+            <input type="text" id="user-login" placeholder="Username">
+            <input type="password" id="pass-login" placeholder="Password">
+            <button onclick="handleLogin()">Sign In</button>
+            <button onclick="resetConnection()" class="secondary" style="width:100%; margin-top:10px; font-size: 12px;">Change GitHub Settings</button>
+        </div>
     </div>
 </div>
 
@@ -35,16 +47,16 @@
     <div class="navbar">
         <span id="nav-info"></span>
         <div>
-            <button class="secondary" onclick="showView('view-main')">📈 Market</button>
+            <button class="secondary" onclick="showView('view-market')">📈 Market</button>
             <button class="secondary" onclick="showView('view-portfolio')">💼 Portfolio</button>
             <button id="admin-nav" class="secondary hidden" onclick="showView('view-admin')">⚙️ Admin</button>
-            <button class="secondary" style="background:#444" onclick="location.reload()">Logout</button>
+            <button class="secondary" onclick="location.reload()">Logout</button>
         </div>
     </div>
 
-    <div id="page-content" class="container">
+    <div class="container">
         <div id="view-market">
-            <h2>Live Market <span id="market-status"></span></h2>
+            <h2>Market <span id="market-status"></span></h2>
             <div id="market-list" class="card"></div>
         </div>
 
@@ -54,86 +66,43 @@
         </div>
 
         <div id="view-admin" class="hidden">
-            <h2>Admin Control Panel</h2>
+            <h2>Admin Panel</h2>
             <div class="card">
-                <h3>Add / Update Ticker</h3>
-                <input type="text" id="adm-ticker" placeholder="Ticker (e.g. BTC)">
+                <h3>Manage Tickers</h3>
+                <input type="text" id="adm-ticker" placeholder="Ticker">
                 <input type="number" id="adm-price" placeholder="Price">
-                <button class="add" onclick="adminUpdateTicker()">Add/Update Stock</button>
-                <button class="sell" onclick="adminDeleteTicker()">Remove Ticker</button>
+                <button onclick="adminUpdateTicker()">Add or Update Price</button>
+                <button class="sell" style="width:100%; margin-top:10px;" onclick="adminDeleteTicker()">Delete Ticker</button>
             </div>
-            <div class="card" style="border-top: 4px solid var(--danger);">
-                <h3>System Controls</h3>
-                <button class="sell" style="width:100%" onclick="adminToggleSystem()">Toggle Market Shutdown</button>
-            </div>
+            <button class="sell" onclick="adminToggleSystem()">Toggle System Shutdown</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- HARDCODED CONFIG ---
-    const CONFIG = {
-        token: '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', 
-        repo: 'Alalani-school/stock-market-database',
-        path: 'db.json'
-    };
+    let DB = null, currentUser = null, currentSha = "";
+    let GITHUB_CONFIG = { token: "", repo: "", path: "db.json" };
 
-    let DB = null;
-    let currentUser = null;
-    let currentSha = "";
-
-    // --- DATABASE ENGINE ---
-    async function syncDB() {
-        const url = `https://api.github.com/repos/${CONFIG.repo}/contents/${CONFIG.path}`;
-        try {
-            const res = await fetch(url, { 
-                headers: { "Authorization": `token ${CONFIG.token}`, "Cache-Control": "no-cache" }
-            });
-            const data = await res.json();
-            currentSha = data.sha;
-            DB = JSON.parse(atob(data.content));
-            
-            // Fix: Re-sync the currentUser object with the fresh data from the DB
-            if (currentUser) {
-                currentUser = DB.users.find(u => u.username === currentUser.username);
-            }
-            return true;
-        } catch (e) {
-            alert("Database Sync Error.");
-            return false;
+    // --- CONNECTION & AUTH ---
+    async function testConnection() {
+        GITHUB_CONFIG.token = document.getElementById('gh-token').value;
+        GITHUB_CONFIG.repo = document.getElementById('gh-repo').value;
+        
+        const success = await syncDB();
+        if (success) {
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+            // Save settings for next time
+            localStorage.setItem('exch_repo', GITHUB_CONFIG.repo);
         }
     }
 
-    async function pushDB() {
-        const url = `https://api.github.com/repos/${CONFIG.repo}/contents/${CONFIG.path}`;
-        const res = await fetch(url, {
-            method: "PUT",
-            headers: { "Authorization": `token ${CONFIG.token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: "Market Sync",
-                content: btoa(JSON.stringify(DB, null, 2)),
-                sha: currentSha
-            })
-        });
-        if (res.ok) {
-            await syncDB(); // Force immediate re-fetch after update
-            renderUI();
-        } else {
-            alert("Save failed. Try refreshing.");
-        }
+    function resetConnection() {
+        document.getElementById('setup-section').classList.remove('hidden');
+        document.getElementById('login-section').classList.add('hidden');
     }
 
-    // --- NAVIGATION ---
-    function showView(viewId) {
-        const views = ['view-market', 'view-portfolio', 'view-admin'];
-        views.forEach(v => document.getElementById(v).classList.add('hidden'));
-        document.getElementById(viewId).classList.remove('hidden');
-        renderUI();
-    }
-
-    // --- APP LOGIC ---
     async function handleLogin() {
-        await syncDB();
         const u = document.getElementById('user-login').value;
         const p = document.getElementById('pass-login').value;
         const user = DB.users.find(x => x.username === u && x.password === p);
@@ -144,50 +113,71 @@
             document.getElementById('view-main').classList.remove('hidden');
             if (user.role === 'admin') document.getElementById('admin-nav').classList.remove('hidden');
             renderUI();
-        } else {
-            alert("Invalid Login");
+        } else { alert("Invalid Credentials"); }
+    }
+
+    // --- DATABASE ENGINE ---
+    async function syncDB() {
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+        try {
+            const res = await fetch(url, { 
+                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Cache-Control": "no-cache" }
+            });
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            currentSha = data.sha;
+            DB = JSON.parse(atob(data.content));
+            if (currentUser) currentUser = DB.users.find(u => u.username === currentUser.username);
+            return true;
+        } catch (e) {
+            alert("Connection Error: Check your Token and Repo Path.");
+            return false;
         }
     }
 
+    async function pushDB() {
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+        const res = await fetch(url, {
+            method: "PUT",
+            headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: "Market Sync",
+                content: btoa(JSON.stringify(DB, null, 2)),
+                sha: currentSha
+            })
+        });
+        if (res.ok) { await syncDB(); renderUI(); }
+    }
+
+    // --- UI & LOGIC ---
+    function showView(id) {
+        ['view-market', 'view-portfolio', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
     function renderUI() {
-        if (!currentUser) return;
-
-        // Update Navbar
-        document.getElementById('nav-info').innerText = `👤 ${currentUser.username} | 💰 $${currentUser.balance.toLocaleString()}`;
-
-        // Update Market
-        const mStatus = document.getElementById('market-status');
-        mStatus.innerText = DB.systemLive ? "🟢" : "🔴 CLOSED";
+        document.getElementById('nav-info').innerText = `💰 $${currentUser.balance.toLocaleString()}`;
+        document.getElementById('market-status').innerText = DB.systemLive ? "🟢" : "🔴 CLOSED";
         
-        const mList = document.getElementById('market-list');
-        mList.innerHTML = DB.stocks.map(s => `
+        document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
             <div class="stock-item">
-                <span><b>${s.ticker}</b>: $${s.price.toLocaleString()}</span>
+                <span><b>${s.ticker}</b>: $${s.price}</span>
                 <div>
-                    <button onclick="trade('${s.ticker}', 'buy')">Buy</button>
+                    <button class="secondary" style="background:var(--primary)" onclick="trade('${s.ticker}', 'buy')">Buy</button>
                     <button class="secondary sell" onclick="trade('${s.ticker}', 'sell')">Sell</button>
                 </div>
             </div>
         `).join('');
 
-        // Update Portfolio
-        const pList = document.getElementById('portfolio-list');
         const pData = currentUser.portfolio || {};
-        const items = Object.entries(pData).filter(([_, qty]) => qty > 0);
-        pList.innerHTML = items.length ? items.map(([t, q]) => `
-            <div class="portfolio-item">
-                <span>${t}</span>
-                <span>${q} Shares</span>
-            </div>
-        `).join('') : "<p style='padding:15px'>No stocks owned.</p>";
+        document.getElementById('portfolio-list').innerHTML = Object.entries(pData)
+            .filter(([_, q]) => q > 0)
+            .map(([t, q]) => `<div class="stock-item"><b>${t}</b> <span>${q} Shares</span></div>`).join('') || "Empty";
     }
 
     async function trade(ticker, type) {
-        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Market is currently closed.");
-        
-        // Re-sync before trade to prevent price lag
+        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Closed");
         await syncDB();
-        
         const stock = DB.stocks.find(s => s.ticker === ticker);
         const user = DB.users.find(u => u.username === currentUser.username);
 
@@ -195,28 +185,22 @@
             if (user.balance >= stock.price) {
                 user.balance -= stock.price;
                 user.portfolio[ticker] = (user.portfolio[ticker] || 0) + 1;
-            } else return alert("Insufficient Balance");
+            }
         } else {
             if (user.portfolio[ticker] > 0) {
                 user.balance += stock.price;
                 user.portfolio[ticker] -= 1;
-            } else return alert("You don't own this stock");
+            }
         }
         await pushDB();
     }
 
-    // --- ADMIN ACTIONS ---
+    // --- ADMIN ---
     async function adminUpdateTicker() {
         const t = document.getElementById('adm-ticker').value.toUpperCase();
         const p = parseFloat(document.getElementById('adm-price').value);
-        if (!t || isNaN(p)) return alert("Invalid inputs");
-
-        const stock = DB.stocks.find(s => s.ticker === t);
-        if (stock) {
-            stock.price = p; // Update existing
-        } else {
-            DB.stocks.push({ ticker: t, price: p }); // Add new
-        }
+        let stock = DB.stocks.find(s => s.ticker === t);
+        stock ? stock.price = p : DB.stocks.push({ticker: t, price: p});
         await pushDB();
     }
 
@@ -230,6 +214,11 @@
         DB.systemLive = !DB.systemLive;
         await pushDB();
     }
+
+    window.onload = () => {
+        const savedRepo = localStorage.getItem('exch_repo');
+        if (savedRepo) document.getElementById('gh-repo').value = savedRepo;
+    };
 </script>
 </body>
 </html>
