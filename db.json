@@ -3,7 +3,7 @@
   "stocks": [
     {
       "ticker": "AAPL",
-      "price": 150
+      "price": 543
     }
   ],
   "users": [
@@ -24,6 +24,10 @@
     {
       "time": "3:57:34 PM",
       "msg": "Admin deleted ticker: BTC"
+    },
+    {
+      "time": "3:57:40 PM",
+      "msg": "Admin updated stock: AAPL to $543"
     }
   ]
 }
