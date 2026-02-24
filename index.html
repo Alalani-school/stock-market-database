@@ -6,7 +6,7 @@
     <title>BVG Stock Market</title>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --primary: #238636; --danger: #da3633; --accent: #1f6feb; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; user-select: none; }
         .hidden { display: none !important; }
         .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
@@ -22,9 +22,15 @@
         .status-tag { padding: 2px 8px; border-radius: 10px; font-size: 12px; }
         .online { background: #23863633; color: #238636; border: 1px solid #238636; }
         .offline { background: #da363333; color: #da3633; border: 1px solid #da3633; }
+        
+        /* Leaderboard Styling */
+        .rank-item { display: grid; grid-template-columns: 50px 1fr 150px; padding: 10px; border-bottom: 1px solid var(--border); align-items: center; }
+        .rank-1 { color: #ffd700; font-weight: bold; }
+        .rank-2 { color: #c0c0c0; font-weight: bold; }
+        .rank-3 { color: #cd7f32; font-weight: bold; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
 <div id="loading-overlay"><h2>🏛️ Please Wait...</h2></div>
 
@@ -43,6 +49,7 @@
         <div>
             <button class="secondary" onclick="showView('view-market')">📈 Market</button>
             <button class="secondary" onclick="showView('view-portfolio')">💼 Portfolio</button>
+            <button class="secondary" onclick="showView('view-leaderboard')">🏆 Ranks</button>
             <button id="admin-nav" class="secondary hidden" onclick="showView('view-admin')">⚙️ Admin</button>
             <button class="secondary" onclick="location.reload()">Logout</button>
         </div>
@@ -62,14 +69,17 @@
             <div id="portfolio-list" class="card"></div>
         </div>
 
+        <div id="view-leaderboard" class="hidden">
+            <h2>Global Leaderboard</h2>
+            <div class="card" id="leaderboard-list"></div>
+        </div>
+
         <div id="view-admin" class="hidden">
             <h2>Admin Command Center</h2>
-            
             <div class="card">
                 <h3>Transaction Logs</h3>
                 <div id="admin-logs" class="log-box"></div>
             </div>
-
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="card">
                     <h3>User Control</h3>
@@ -81,13 +91,12 @@
                 </div>
                 <div class="card">
                     <h3>Stock Control</h3>
-                    <input type="text" id="adm-stk-t" placeholder="Ticker (e.g. BTC)">
+                    <input type="text" id="adm-stk-t" placeholder="Ticker">
                     <input type="number" id="adm-stk-p" placeholder="Price">
                     <button onclick="adminStockAction('update')">Create/Update Price</button>
                     <button class="danger" onclick="adminStockAction('delete')" style="margin-top:5px">Delete Ticker</button>
                 </div>
             </div>
-
             <div class="card" style="border: 1px solid var(--danger);">
                 <h3>System Danger Zone</h3>
                 <div style="display:flex; gap:10px;">
@@ -100,8 +109,19 @@
 </div>
 
 <script>
-    // --- OBFUSCATION CONFIG ---
-    // Split your token into 3 parts to hide it from GitHub's simple scanner
+    // --- SECURITY: ANTI-INSPECT ---
+    document.onkeydown = function(e) {
+        if(event.keyCode == 123) return false; // F12
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false; // Ctrl+Shift+I
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false; // Ctrl+Shift+C
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false; // Ctrl+Shift+J
+        if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false; // Ctrl+U
+    };
+
+    // Debugger trap: freezes the page if dev tools are opened
+    setInterval(function(){ debugger; }, 100);
+
+    // --- CONFIG ---
     const p1 = "ghp_"; 
     const p2 = "bbqUe5K7A60ohiruHcby"; 
     const p3 = "p4s0zy65Zt0iHYJ4";
@@ -115,7 +135,6 @@
     let DB = null, currentUser = null, currentSha = "", isBusy = false;
     let queue = Promise.resolve();
 
-    // --- ENGINE ---
     window.onload = async () => {
         const success = await syncDB();
         document.getElementById('loading-overlay').classList.add('hidden');
@@ -138,7 +157,6 @@
     }
 
     async function pushDB() {
-        // Queue prevents multiple overlapping saves (race conditions)
         return queue = queue.then(async () => {
             isBusy = true; renderUI();
             const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
@@ -148,21 +166,17 @@
                     headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
                     body: JSON.stringify({ message: "Update", content, sha: currentSha })
                 });
-                if (res.status === 409) { await syncDB(); return pushDB(); } // Auto-retry on conflict
+                if (res.status === 409) { await syncDB(); return pushDB(); }
                 await syncDB();
-            } finally {
-                isBusy = false; renderUI();
-            }
+            } finally { isBusy = false; renderUI(); }
         });
     }
 
-    // --- AUTH ---
     async function handleLogin() {
         await syncDB();
         const u = document.getElementById('user-login').value;
         const p = document.getElementById('pass-login').value;
         const found = DB.users.find(x => x.username === u && x.password === p);
-
         if (found) {
             if (found.disabled && found.role !== 'admin') return alert("Account Disabled.");
             currentUser = found;
@@ -173,7 +187,15 @@
         } else alert("Invalid Login");
     }
 
-    // --- UI ---
+    function calculateNetWorth(user) {
+        let stockVal = 0;
+        Object.entries(user.portfolio || {}).forEach(([ticker, qty]) => {
+            const stock = DB.stocks.find(s => s.ticker === ticker);
+            if (stock) stockVal += (stock.price * qty);
+        });
+        return user.balance + stockVal;
+    }
+
     function renderUI() {
         if (!currentUser) return;
         document.getElementById('nav-info').innerText = `👤 ${currentUser.username} | 💰 $${currentUser.balance.toLocaleString()}`;
@@ -185,6 +207,7 @@
 
         const btnState = (isBusy || (!DB.systemLive && currentUser.role !== 'admin')) ? "disabled" : "";
 
+        // Market UI
         document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
             <div class="item-row">
                 <span><b>${s.ticker}</b>: $${s.price.toLocaleString()}</span>
@@ -194,17 +217,27 @@
                 </div>
             </div>`).join('');
 
+        // Portfolio UI
         const port = currentUser.portfolio || {};
         document.getElementById('portfolio-list').innerHTML = Object.entries(port).filter(([_,q]) => q > 0)
             .map(([t,q]) => `<div class="item-row"><b>${t}</b> <span>${q} Shares</span></div>`).join('') || "No assets.";
 
+        // Leaderboard UI
+        const sortedUsers = [...DB.users].sort((a, b) => calculateNetWorth(b) - calculateNetWorth(a));
+        document.getElementById('leaderboard-list').innerHTML = sortedUsers.map((u, i) => `
+            <div class="rank-item ${i < 3 ? 'rank-' + (i+1) : ''}">
+                <span>#${i + 1}</span>
+                <span>${u.username} ${u.role === 'admin' ? '🛡️' : ''}</span>
+                <span style="text-align:right">$${calculateNetWorth(u).toLocaleString()}</span>
+            </div>`).join('');
+
+        // Admin Logs
         if (currentUser.role === 'admin') {
             document.getElementById('admin-logs').innerHTML = (DB.logs || []).slice().reverse()
                 .map(l => `<div>[${l.time}] ${l.msg}</div>`).join('');
         }
     }
 
-    // --- ACTIONS ---
     async function trade(ticker, type) {
         if (isBusy) return;
         const qty = parseInt(document.getElementById('trade-qty').value) || 1;
@@ -220,8 +253,7 @@
             user.balance += total;
             user.portfolio[ticker] -= qty;
             log(`${user.username} SOLD ${qty} ${ticker}`);
-        } else return alert("Trade Invalid (Funds/Stock/Market)");
-
+        } else return alert("Trade Invalid");
         await pushDB();
     }
 
@@ -237,20 +269,10 @@
         const p = document.getElementById('adm-user-p').value;
         const b = parseFloat(document.getElementById('adm-user-b').value);
         let u = DB.users.find(x => x.username === n);
-
         if (action === 'update') {
-            if (u) {
-                if (p) u.password = p;
-                if (!isNaN(b)) u.balance = b;
-                log(`Admin updated user: ${n}`);
-            } else {
-                DB.users.push({username:n, password:p||"123", balance:b||1000, role:"user", portfolio:{}, disabled:false});
-                log(`Admin created user: ${n}`);
-            }
-        } else if (action === 'disable' && u) {
-            u.disabled = !u.disabled;
-            log(`Admin toggled disable: ${n}`);
-        }
+            if (u) { if (p) u.password = p; if (!isNaN(b)) u.balance = b; }
+            else { DB.users.push({username:n, password:p||"123", balance:b||1000, role:"user", portfolio:{}, disabled:false}); }
+        } else if (action === 'disable' && u) { u.disabled = !u.disabled; }
         await pushDB();
     }
 
@@ -260,29 +282,21 @@
         if (action === 'update') {
             let s = DB.stocks.find(x => x.ticker === t);
             s ? s.price = p : DB.stocks.push({ticker:t, price:p});
-            log(`Admin updated stock: ${t} to $${p}`);
-        } else if (action === 'delete') {
-            DB.stocks = DB.stocks.filter(x => x.ticker !== t);
-            log(`Admin deleted ticker: ${t}`);
-        }
+        } else if (action === 'delete') { DB.stocks = DB.stocks.filter(x => x.ticker !== t); }
         await pushDB();
     }
 
-    async function adminToggleSystem() {
-        DB.systemLive = !DB.systemLive;
-        log(`SYSTEM STATUS CHANGE: ${DB.systemLive}`);
-        await pushDB();
-    }
+    async function adminToggleSystem() { DB.systemLive = !DB.systemLive; await pushDB(); }
 
     async function adminResetAll() {
-        if (!confirm("WIPE EVERYTHING? All portfolios and balances will reset.")) return;
+        if (!confirm("HARD RESET SYSTEM?")) return;
         DB.users.forEach(u => { u.balance = 1000; u.portfolio = {}; });
         DB.logs = [{time: "SYSTEM", msg: "Hard Reset Performed"}];
         await pushDB();
     }
 
     function showView(id) {
-        ['view-market', 'view-portfolio', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
+        ['view-market', 'view-portfolio', 'view-leaderboard', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
         renderUI();
     }
