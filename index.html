@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Stock Exchange</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: #161b22; border: 1px solid #30363d; padding: 20px; border-radius: 6px; margin-bottom: 20px; }
+        input, button { padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid #30363d; }
+        input { background: #0d1117; color: white; width: calc(100% - 22px); }
+        button { background: #238636; color: white; cursor: pointer; font-weight: bold; width: 100%; }
+        button:hover { background: #2ea043; }
+        .admin-btn { background: #da3633; }
+        .stock-row { display: flex; justify-content: space-between; border-bottom: 1px solid #30363d; padding: 10px 0; }
+        .status-off { color: #f85149; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏛️ BVG Stock Market</h1>
+    
+    <div class="card">
+        <h3>1. Setup & Auth</h3>
+        <input type="password" id="token" placeholder="GitHub Personal Access Token">
+        <input type="text" id="repo" placeholder="username/repo-name">
+        <input type="text" id="adminUser" placeholder="Admin Username">
+    </div>
+
+    <div class="card">
+        <h3>Live Market <span id="sysStatus"></span></h3>
+        <div id="marketList">Connect to see prices...</div>
+        <button onclick="loadData()">Refresh Market</button>
+    </div>
+
+    <div class="card" style="border-top: 4px solid #da3633;">
+        <h3>Admin Panel</h3>
+        <input type="text" id="targetTicker" placeholder="Ticker (e.g. AAPL)">
+        <input type="number" id="newPrice" placeholder="New Price">
+        <button onclick="updatePrice()">Set Price</button>
+        <hr style="border: 0; border-top: 1px solid #30363d; margin: 15px 0;">
+        <button class="admin-btn" onclick="toggleSystem()">Emergency Shutdown</button>
+    </div>
+</div>
+
+<script>
+    let currentSha = "";
+
+    async function fetchFromGithub() {
+        const token = document.getElementById('token').value;
+        const repo = document.getElementById('repo').value;
+        const url = `https://api.github.com/repos/${repo}/contents/db.json`;
+
+        const response = await fetch(url, {
+            headers: { "Authorization": `token ${token}` }
+        });
+        const data = await response.json();
+        currentSha = data.sha;
+        return JSON.parse(atob(data.content));
+    }
+
+    async function saveToGithub(newData) {
+        const token = document.getElementById('token').value;
+        const repo = document.getElementById('repo').value;
+        const url = `https://api.github.com/repos/${repo}/contents/db.json`;
+
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: "Market Update via Web Dashboard",
+                content: btoa(JSON.stringify(newData, null, 2)),
+                sha: currentSha
+            })
+        });
+
+        if (response.ok) alert("Update Successful!");
+        else alert("Update Failed. Check console.");
+    }
+
+    async function loadData() {
+        try {
+            const db = await fetchFromGithub();
+            const list = document.getElementById('marketList');
+            const status = document.getElementById('sysStatus');
+            
+            status.innerHTML = db.systemLive ? "✅" : "<span class='status-off'>OFFLINE</span>";
+            list.innerHTML = db.stocks.map(s => `
+                <div class="stock-row">
+                    <span>${s.ticker}</span>
+                    <span>$${s.price.toLocaleString()}</span>
+                </div>
+            `).join('');
+        } catch (e) { alert("Error loading data. Check token/repo path."); }
+    }
+
+    async function updatePrice() {
+        const ticker = document.getElementById('targetTicker').value.toUpperCase();
+        const price = parseFloat(document.getElementById('newPrice').value);
+        const db = await fetchFromGithub();
+
+        const stock = db.stocks.find(s => s.ticker === ticker);
+        if (stock) {
+            stock.price = price;
+            await saveToGithub(db);
+            loadData();
+        } else {
+            alert("Ticker not found");
+        }
+    }
+
+    async function toggleSystem() {
+        const db = await fetchFromGithub();
+        db.systemLive = !db.systemLive;
+        await saveToGithub(db);
+        loadData();
+    }
+</script>
+
+</body>
+</html>
