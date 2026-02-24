@@ -20,6 +20,14 @@
         "AAPL": 3
       },
       "disabled": false
+    },
+    {
+      "username": "someone",
+      "password": "test",
+      "balance": 32,
+      "role": "user",
+      "portfolio": {},
+      "disabled": false
     }
   ],
   "logs": [
@@ -74,6 +82,10 @@
     {
       "time": "5:26:14 PM",
       "msg": "Admin updated stock: BTC to $567785"
+    },
+    {
+      "time": "5:27:30 PM",
+      "msg": "Admin created user: someone"
     }
   ]
 }
