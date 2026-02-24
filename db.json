@@ -1,16 +1,24 @@
 {
   "systemLive": true,
   "stocks": [
-    {"ticker": "AAPL", "price": 150},
-    {"ticker": "TSLA", "price": 250}
+    {
+      "ticker": "AAPL",
+      "price": 150
+    },
+    {
+      "ticker": "TSLA",
+      "price": 250
+    }
   ],
   "users": [
     {
-      "username": "admin", 
-      "password": "123", 
-      "role": "admin", 
-      "balance": 10000, 
-      "portfolio": {}
+      "username": "admin",
+      "password": "123",
+      "role": "admin",
+      "balance": 9850,
+      "portfolio": {
+        "AAPL": 1
+      }
     }
   ]
 }
