@@ -17,19 +17,22 @@
         button.sell { background: var(--danger); width: auto; margin-top: 0; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); }
         .admin-box { border-left: 4px solid var(--accent); padding-left: 15px; margin-bottom: 30px; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 999; }
     </style>
 </head>
 <body>
 
-<div id="view-login" class="container">
+<div id="loading-overlay"><h2>Connecting to GitHub...</h2></div>
+
+<div id="view-login" class="container hidden">
     <div class="card">
         <h2 style="text-align: center;">🏛️ Exchange Login</h2>
         
         <div id="setup-section">
-            <small>Database Connection (Stored Locally):</small>
+            <small>Database Connection Settings:</small>
             <input type="password" id="gh-token" placeholder="GitHub PAT (ghp_...)">
             <input type="text" id="gh-repo" placeholder="username/repository-name">
-            <button onclick="testConnection()" style="background: var(--accent);">Connect & Save Settings</button>
+            <button onclick="testConnection()" style="background: var(--accent);">Connect & Save</button>
         </div>
 
         <div id="login-section" class="hidden">
@@ -37,7 +40,7 @@
             <input type="text" id="user-login" placeholder="Username">
             <input type="password" id="pass-login" placeholder="Password">
             <button onclick="handleLogin()">Sign In</button>
-            <button onclick="clearStorage()" class="secondary" style="width:100%; margin-top:10px; font-size: 11px;">Clear Saved API Key</button>
+            <button onclick="clearStorage()" class="secondary" style="width:100%; margin-top:10px; font-size: 11px;">Reset API Connection</button>
         </div>
     </div>
 </div>
@@ -58,37 +61,32 @@
             <h2>Market <span id="market-status"></span></h2>
             <div id="market-list" class="card"></div>
         </div>
-
         <div id="view-portfolio" class="hidden">
             <h2>Your Assets</h2>
             <div id="portfolio-list" class="card"></div>
         </div>
-
         <div id="view-admin" class="hidden">
             <h2>Admin Panel</h2>
-            
             <div class="card admin-box">
                 <h3>Manage Users</h3>
                 <input type="text" id="adm-user-name" placeholder="Username">
-                <input type="password" id="adm-user-pass" placeholder="Password (for new users)">
+                <input type="password" id="adm-user-pass" placeholder="Password">
                 <input type="number" id="adm-user-budget" placeholder="Set Budget ($)">
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="adminUpdateUser()">Add / Update User</button>
-                    <button class="sell" onclick="adminDeleteUser()">Delete User</button>
+                    <button onclick="adminUpdateUser()">Add/Update</button>
+                    <button class="sell" onclick="adminDeleteUser()">Delete</button>
                 </div>
             </div>
-
             <div class="card admin-box">
                 <h3>Manage Stocks</h3>
                 <input type="text" id="adm-ticker" placeholder="Ticker">
                 <input type="number" id="adm-price" placeholder="Price">
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="adminUpdateTicker()">Add / Update Price</button>
-                    <button class="sell" onclick="adminDeleteTicker()">Delete Ticker</button>
+                    <button onclick="adminUpdateTicker()">Add/Update</button>
+                    <button class="sell" onclick="adminDeleteTicker()">Delete</button>
                 </div>
             </div>
-
-            <button class="sell" onclick="adminToggleSystem()">Toggle System Shutdown</button>
+            <button class="sell" onclick="adminToggleSystem()">Toggle Shutdown</button>
         </div>
     </div>
 </div>
@@ -97,53 +95,58 @@
     let DB = null, currentUser = null, currentSha = "";
     let GITHUB_CONFIG = { token: "", repo: "", path: "db.json" };
 
-    // --- SETUP & PERSISTENCE ---
-    window.onload = () => {
+    // --- INITIALIZATION ---
+    window.onload = async () => {
         const savedToken = localStorage.getItem('exch_token');
         const savedRepo = localStorage.getItem('exch_repo');
+        
         if (savedToken && savedRepo) {
-            document.getElementById('gh-token').value = savedToken;
-            document.getElementById('gh-repo').value = savedRepo;
-            testConnection(); 
+            GITHUB_CONFIG.token = savedToken;
+            GITHUB_CONFIG.repo = savedRepo;
+            const success = await syncDB();
+            if (success) {
+                document.getElementById('setup-section').classList.add('hidden');
+                document.getElementById('login-section').classList.remove('hidden');
+            }
         }
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('view-login').classList.remove('hidden');
     };
-
-    function clearStorage() {
-        localStorage.clear();
-        location.reload();
-    }
 
     async function testConnection() {
         GITHUB_CONFIG.token = document.getElementById('gh-token').value;
         GITHUB_CONFIG.repo = document.getElementById('gh-repo').value;
-        
         const success = await syncDB();
         if (success) {
             localStorage.setItem('exch_token', GITHUB_CONFIG.token);
             localStorage.setItem('exch_repo', GITHUB_CONFIG.repo);
             document.getElementById('setup-section').classList.add('hidden');
             document.getElementById('login-section').classList.remove('hidden');
+        } else {
+            alert("Could not connect to GitHub. Check your token and repo name.");
         }
     }
 
-    // --- DATABASE ENGINE ---
+    function clearStorage() {
+        localStorage.clear();
+        location.reload();
+    }
+
+    // --- DATABASE CORE ---
     async function syncDB() {
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
         try {
             const res = await fetch(url, { 
                 headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}` }
             });
-            if (!res.ok) throw new Error("CORS or Auth Error");
+            if (!res.ok) return false;
             const data = await res.json();
             currentSha = data.sha;
-            // Robust Decoding
+            // Decode with UTF-8 support
             DB = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\s/g, '')))));
             if (currentUser) currentUser = DB.users.find(u => u.username === currentUser.username);
             return true;
-        } catch (e) {
-            console.error(e);
-            return false;
-        }
+        } catch (e) { return false; }
     }
 
     async function pushDB() {
@@ -152,12 +155,12 @@
         const res = await fetch(url, {
             method: "PUT",
             headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ message: "Update", content, sha: currentSha })
+            body: JSON.stringify({ message: "DB Sync", content, sha: currentSha })
         });
         if (res.ok) { await syncDB(); renderUI(); }
     }
 
-    // --- LOGIC ---
+    // --- UI LOGIC ---
     async function handleLogin() {
         const u = document.getElementById('user-login').value;
         const p = document.getElementById('pass-login').value;
@@ -168,13 +171,12 @@
             document.getElementById('view-main').classList.remove('hidden');
             if (user.role === 'admin') document.getElementById('admin-nav').classList.remove('hidden');
             renderUI();
-        } else { alert("Login failed"); }
+        } else { alert("User not found or password incorrect."); }
     }
 
     function renderUI() {
         document.getElementById('nav-info').innerText = `💰 $${currentUser.balance.toLocaleString()}`;
         document.getElementById('market-status').innerText = DB.systemLive ? "🟢" : "🔴 CLOSED";
-        
         document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
             <div class="item-row">
                 <span><b>${s.ticker}</b>: $${s.price}</span>
@@ -182,17 +184,14 @@
                     <button class="secondary" style="background:var(--primary)" onclick="trade('${s.ticker}', 'buy')">Buy</button>
                     <button class="secondary sell" onclick="trade('${s.ticker}', 'sell')">Sell</button>
                 </div>
-            </div>
-        `).join('');
-
+            </div>`).join('');
         const pData = currentUser.portfolio || {};
-        document.getElementById('portfolio-list').innerHTML = Object.entries(pData)
-            .filter(([_, q]) => q > 0)
+        document.getElementById('portfolio-list').innerHTML = Object.entries(pData).filter(([_, q]) => q > 0)
             .map(([t, q]) => `<div class="item-row"><b>${t}</b> <span>${q} Shares</span></div>`).join('') || "No assets.";
     }
 
     async function trade(ticker, type) {
-        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Closed");
+        if (!DB.systemLive && currentUser.role !== 'admin') return alert("Market Closed");
         await syncDB();
         const stock = DB.stocks.find(s => s.ticker === ticker);
         const user = DB.users.find(u => u.username === currentUser.username);
@@ -202,36 +201,30 @@
         } else if (type === 'sell' && user.portfolio[ticker] > 0) {
             user.balance += stock.price;
             user.portfolio[ticker] -= 1;
-        } else return;
-        await pushDB();
-    }
-
-    // --- ADMIN USER MANAGEMENT ---
-    async function adminUpdateUser() {
-        const name = document.getElementById('adm-user-name').value;
-        const pass = document.getElementById('adm-user-pass').value;
-        const budget = parseFloat(document.getElementById('adm-user-budget').value);
-        
-        let user = DB.users.find(u => u.username === name);
-        if (user) {
-            if (!isNaN(budget)) user.balance = budget;
-            if (pass) user.password = pass;
-            alert(`Updated ${name}`);
-        } else {
-            DB.users.push({ username: name, password: pass || "123", balance: budget || 1000, role: "user", portfolio: {} });
-            alert(`Created ${name}`);
         }
         await pushDB();
     }
 
+    // --- ADMIN ---
+    async function adminUpdateUser() {
+        const name = document.getElementById('adm-user-name').value;
+        const pass = document.getElementById('adm-user-pass').value;
+        const budget = parseFloat(document.getElementById('adm-user-budget').value);
+        let user = DB.users.find(u => u.username === name);
+        if (user) {
+            if (!isNaN(budget)) user.balance = budget;
+            if (pass) user.password = pass;
+        } else {
+            DB.users.push({ username: name, password: pass || "123", balance: budget || 1000, role: "user", portfolio: {} });
+        }
+        await pushDB();
+    }
     async function adminDeleteUser() {
         const name = document.getElementById('adm-user-name').value;
-        if (name === currentUser.username) return alert("Cannot delete yourself");
+        if (name === currentUser.username) return;
         DB.users = DB.users.filter(u => u.username !== name);
         await pushDB();
     }
-
-    // --- ADMIN STOCK MANAGEMENT ---
     async function adminUpdateTicker() {
         const t = document.getElementById('adm-ticker').value.toUpperCase();
         const p = parseFloat(document.getElementById('adm-price').value);
@@ -239,18 +232,15 @@
         s ? s.price = p : DB.stocks.push({ticker: t, price: p});
         await pushDB();
     }
-
     async function adminDeleteTicker() {
         const t = document.getElementById('adm-ticker').value.toUpperCase();
         DB.stocks = DB.stocks.filter(s => s.ticker !== t);
         await pushDB();
     }
-
     async function adminToggleSystem() {
         DB.systemLive = !DB.systemLive;
         await pushDB();
     }
-
     function showView(id) {
         ['view-market', 'view-portfolio', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
