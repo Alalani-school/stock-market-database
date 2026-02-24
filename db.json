@@ -1,5 +1,5 @@
 {
-  "systemLive": false,
+  "systemLive": true,
   "stocks": [
     {
       "ticker": "AAPL",
@@ -36,6 +36,10 @@
     {
       "time": "3:45:13 PM",
       "msg": "admin bought 1 AAPL for $5432"
+    },
+    {
+      "time": "3:45:33 PM",
+      "msg": "ADMIN toggled shutdown: false"
     }
   ]
 }
