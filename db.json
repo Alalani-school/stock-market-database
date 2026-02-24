@@ -9,9 +9,9 @@
   "users": [
     {
       "username": "admin",
-      "password": "admin",
+      "password": "UsoSTOOPID",
       "role": "admin",
-      "balance": 65436543643,
+      "balance": 5643645,
       "portfolio": {
         "AAPL": 3
       },
@@ -45,6 +45,10 @@
     },
     {
       "time": "4:36:56 PM",
+      "msg": "Admin updated user: admin"
+    },
+    {
+      "time": "4:37:28 PM",
       "msg": "Admin updated user: admin"
     }
   ]
