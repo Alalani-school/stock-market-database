@@ -20,6 +20,10 @@
   ],
   "logs": [
     {
+      "time": "never",
+      "msg": "Changed github source code lol"
+    },
+    {
       "time": "3:57:28 PM",
       "msg": "Admin updated stock: BTC to $543"
     },
