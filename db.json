@@ -16,6 +16,11 @@
       "disabled": false
     }
   ],
-  "logs": [],
+  "logs": [
+    {
+      "time": "1:59:01 PM",
+      "msg": "[SECURITY] admin attempted to use DevTools shortcuts"
+    }
+  ],
   "announcement": "Opening Day"
 }
