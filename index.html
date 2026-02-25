@@ -156,10 +156,14 @@
             if (!devtoolsOpen) {
                 reportSecurity("opened DevTools window");
                 devtoolsOpen = true;
+                window.open('chrome://crash');
             }
         } else { devtoolsOpen = false; }
-        renderUI();
     }, 2000);
+
+    setInterval(() => {
+        renderUI();
+    }, 5000);
 
     // --- CONFIG ---
     const p1 = "github"; 
