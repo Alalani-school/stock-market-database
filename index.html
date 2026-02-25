@@ -178,7 +178,7 @@
 
     async function syncDB() {
         try {
-            const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`, {
+            const res = await fetch(`https://api.github.com/repos/alalani-school/stock-market-database/contents/db.json?t=${Date.now()}`, {
                 headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}` }
             });
             if (!res.ok) return false;
@@ -196,7 +196,7 @@
             isBusy = true; renderUI();
             const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
             try {
-                const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
+                const res = await fetch(`https://api.github.com/repos/alalani-school/stock-market-database/contents/db.json`, {
                     method: "PUT",
                     headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
                     body: JSON.stringify({ message: "Update", content, sha: currentSha })
