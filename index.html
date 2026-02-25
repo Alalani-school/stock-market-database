@@ -134,6 +134,7 @@
             reportSecurity("attempted to use DevTools shortcuts");
             return false;
         }
+        if(e == "Enter" && currentUser === null) handleLogin();
     };
     document.addEventListener('contextmenu', function(event) {
         event.preventDefault();
