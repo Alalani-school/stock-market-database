@@ -32,6 +32,10 @@
     {
       "time": "2:36:59 PM",
       "msg": "[SECURITY] admin attempted to right click"
+    },
+    {
+      "time": "2:51:16 PM",
+      "msg": "[SECURITY] admin attempted to right click"
     }
   ],
   "announcement": "Opening Day"
