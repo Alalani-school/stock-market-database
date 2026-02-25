@@ -14,6 +14,14 @@
       "balance": 1000,
       "portfolio": {},
       "disabled": false
+    },
+    {
+      "username": "someone",
+      "password": "test",
+      "balance": 1000,
+      "role": "user",
+      "portfolio": {},
+      "disabled": false
     }
   ],
   "logs": [
