@@ -134,12 +134,16 @@
             reportSecurity("attempted to use DevTools shortcuts");
             return false;
         }
-        if(e == "Enter" && currentUser === null) handleLogin();
     };
     document.addEventListener('contextmenu', function(event) {
         event.preventDefault();
         reportSecurity("attempted to right click");
     });
+    document.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        handleLogin();
+    }
+});
     // Detect if console is opened via window resizing
     let devtoolsOpen = false;
     const threshold = 160;
