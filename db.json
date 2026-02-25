@@ -11,8 +11,10 @@
       "username": "admin",
       "password": "admin",
       "role": "admin",
-      "balance": 1000,
-      "portfolio": {},
+      "balance": 457,
+      "portfolio": {
+        "AAPL": 1
+      },
       "disabled": false
     },
     {
@@ -36,6 +38,10 @@
     {
       "time": "2:51:16 PM",
       "msg": "[SECURITY] admin attempted to right click"
+    },
+    {
+      "time": "2:52:24 PM",
+      "msg": "admin BOUGHT 1 AAPL"
     }
   ],
   "announcement": "Opening Day"
