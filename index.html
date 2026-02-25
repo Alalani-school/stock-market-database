@@ -177,22 +177,23 @@
 };
 
     async function syncDB() {
-        try {
-            const res = await fetch(`https://api.github.com/repos/alalani-school/stock-market-database/contents/db.json?t=${Date.now()}`, {
-                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}` }
-            });
-            console.log("STATUS:", res.status);
-            const text = await res.text();
-            console.log("RESPONSE:", text);
-            if (!res.ok) return false;
-            const data = await res.json();
-            currentSha = data.sha;
-            DB = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\s/g, '')))));
-            if (currentUser) currentUser = DB.users.find(u => u.username === currentUser.username);
-            renderUI();
-            return true;
-        } catch (e) {console.error("FETCH ERROR: " + e); return false; }
+    try {
+        const res = await fetch(`https://api.github.com/repos/Alalani-school/stock-market-database/contents/db.json?ref=main`,
+            {headers: { Authorization: `Bearer ${GITHUB_CONFIG.token}` }}
+        );
+        if (!res.ok) {
+            console.error("Status:", res.status);
+            return false;
+        }
+        const data = await res.json();
+        currentSha = data.sha;
+        DB = JSON.parse(atob(data.content));
+        return true;
+    } catch (err) {
+        console.error("SYNC ERROR:", err);
+        return false;
     }
+}
 
     async function pushDB() {
         return queue = queue.then(async () => {
