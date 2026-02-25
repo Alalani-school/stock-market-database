@@ -20,29 +20,13 @@
       "disabled": false
     },
     {
-      "username": "someone",
+      "username": "testAccount",
       "password": "test",
-      "balance": 1000,
       "role": "user",
+      "balance": 1000,
       "portfolio": {},
       "disabled": false
     },
-    {
-      "username": "Miller",
-      "password": "test",
-      "balance": 1000,
-      "role": "user",
-      "portfolio": {},
-      "disabled": false
-    },
-    {
-      "username": "miller",
-      "password": "test",
-      "balance": 1000,
-      "role": "user",
-      "portfolio": {},
-      "disabled": false
-    }
   ],
   "logs": [
     {
