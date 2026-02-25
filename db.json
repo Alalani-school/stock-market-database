@@ -4,7 +4,7 @@
     {
       "ticker": "AAPL",
       "price": 543
-    },
+    }
   ],
   "users": [
     {
@@ -14,9 +14,8 @@
       "balance": 1000,
       "portfolio": {},
       "disabled": false
-    },
+    }
   ],
-  "logs": [
-  ],
+  "logs": [],
   "announcement": "Opening Day"
 }
