@@ -181,11 +181,16 @@
     let queue = Promise.resolve();
 
     window.onload = async () => {
-        await syncDB();
-        document.getElementById('loading-overlay').classList.add('hidden');
-        document.getElementById('view-login').classList.remove('hidden');
-        setInterval(syncDB, 15000); // Auto-sync every 15s for announcements
-    };
+    const success = await syncDB();
+
+    if (!success) {
+        alert("Database failed to load.");
+        return;
+    }
+
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('view-login').classList.remove('hidden');
+};
 
     async function syncDB() {
         try {
