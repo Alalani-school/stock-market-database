@@ -291,6 +291,7 @@
             log(`${user.username} SOLD ${qty} ${ticker}`);
         } else return alert("Trade Invalid");
         await pushDB();
+        renderUI();
     }
 
     function log(msg) {
@@ -304,10 +305,12 @@
         DB.announcement = document.getElementById('adm-msg').value;
         log(`Admin set announcement: ${DB.announcement}`);
         await pushDB();
+        renderUI();
     }
     async function adminClearMessage() {
         DB.announcement = "";
         await pushDB();
+        renderUI();
     }
     async function adminUserAction(action) {
         const n = document.getElementById('adm-user-n').value;
@@ -325,6 +328,7 @@
         log(`Admin deleted user: ${n}`);
     }
         await pushDB();
+        renderUI();
     }
     async function adminStockAction(action) {
         const t = document.getElementById('adm-stk-t').value.toUpperCase();
@@ -334,6 +338,7 @@
             s ? s.price = p : DB.stocks.push({ticker:t, price:p});
         } else if (action === 'delete') { DB.stocks = DB.stocks.filter(x => x.ticker !== t); }
         await pushDB();
+        renderUI();
     }
     async function adminToggleSystem() { DB.systemLive = !DB.systemLive; await pushDB(); }
     async function adminResetAll() {
@@ -341,6 +346,7 @@
         DB.users.forEach(u => { u.balance = 1000; u.portfolio = {}; });
         DB.logs = [{time: "SYSTEM", msg: "Hard Reset Performed"}];
         await pushDB();
+        renderUI();
     }
     function showView(id) {
         ['view-market', 'view-portfolio', 'view-leaderboard', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
