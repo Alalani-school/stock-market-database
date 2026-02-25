@@ -181,6 +181,9 @@
             const res = await fetch(`https://api.github.com/repos/alalani-school/stock-market-database/contents/db.json?t=${Date.now()}`, {
                 headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}` }
             });
+            console.log("STATUS:", res.status);
+            const text = await res.text();
+            console.log("RESPONSE:", text);
             if (!res.ok) return false;
             const data = await res.json();
             currentSha = data.sha;
@@ -188,7 +191,7 @@
             if (currentUser) currentUser = DB.users.find(u => u.username === currentUser.username);
             renderUI();
             return true;
-        } catch (e) { return false; }
+        } catch (e) {console.error("FETCH ERROR: " + e); return false; }
     }
 
     async function pushDB() {
