@@ -145,6 +145,7 @@
         const forbidden = [123, 73, 74, 67, 85]; // F12, I, J, C, U
         if (forbidden.includes(e.keyCode) && (e.ctrlKey || e.shiftKey || e.keyCode == 123)) {
             reportSecurity("attempted to use DevTools shortcuts");
+            if(currentUser !== null) disableUser(currentUser);
             return false;
         }
     };
@@ -330,6 +331,11 @@
         if (!confirm("HARD RESET SYSTEM?")) return;
         DB.users.forEach(u => { u.balance = 1000; u.portfolio = {}; });
         DB.logs = [{time: "SYSTEM", msg: "Hard Reset Performed"}];
+        await pushDB();
+    }
+    async function disableUser(user) {
+        let u = DB.users.find(x => x.username === user);
+        if (u) {u.disabled = true; }
         await pushDB();
     }
     function showView(id) {
