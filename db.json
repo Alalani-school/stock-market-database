@@ -5,10 +5,6 @@
       "ticker": "AAPL",
       "price": 543
     },
-    {
-      "ticker": "BTC",
-      "price": 567785
-    }
   ],
   "users": [
     {
@@ -19,20 +15,8 @@
       "portfolio": {},
       "disabled": false
     },
-    {
-      "username": "testAccount",
-      "password": "test",
-      "role": "user",
-      "balance": 1000,
-      "portfolio": {},
-      "disabled": false
-    },
   ],
   "logs": [
-    {
-      "time": "SYSTEM",
-      "msg": "Hard Reset Performed"
-    }
   ],
-  "announcement": "yo miller how's it going"
+  "announcement": "Opening Day"
 }
