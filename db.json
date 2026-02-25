@@ -15,8 +15,10 @@
       "username": "admin",
       "password": "admin",
       "role": "admin",
-      "balance": 1000,
-      "portfolio": {},
+      "balance": 457,
+      "portfolio": {
+        "AAPL": 1
+      },
       "disabled": false
     },
     {
@@ -74,6 +76,10 @@
     {
       "time": "7:01:44 PM",
       "msg": "miller BOUGHT 1 BTC"
+    },
+    {
+      "time": "7:05:50 PM",
+      "msg": "admin BOUGHT 1 AAPL"
     }
   ],
   "announcement": "yo miller how's it going"
