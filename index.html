@@ -216,7 +216,6 @@
                     body: JSON.stringify({ message: "Update", content, sha: currentSha })
                 });
                 if (res.status === 409) { await syncDB(); return pushDB(); }
-                await syncDB();
             } finally { isBusy = false; renderUI(); }
         });
     }
