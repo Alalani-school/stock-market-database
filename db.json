@@ -38,10 +38,10 @@
     {
       "username": "miller",
       "password": "test",
-      "balance": 5080980,
+      "balance": 4513195,
       "role": "user",
       "portfolio": {
-        "BTC": 1
+        "BTC": 2
       },
       "disabled": false
     }
@@ -69,6 +69,10 @@
     },
     {
       "time": "7:01:40 PM",
+      "msg": "miller BOUGHT 1 BTC"
+    },
+    {
+      "time": "7:01:44 PM",
       "msg": "miller BOUGHT 1 BTC"
     }
   ],
