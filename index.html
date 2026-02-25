@@ -99,6 +99,7 @@
                     <input type="number" id="adm-user-b" placeholder="Set Budget">
                     <button onclick="adminUserAction('update')">Create/Update User</button>
                     <button class="danger" onclick="adminUserAction('disable')" style="margin-top:5px">Enable/Disable User</button>
+                    <button class="danger" onclick="adminUserAction('delete')" style="margin-top:5px">Delete User</button>
                 </div>
                 <div class="card">
                     <h3>Stock Control</h3>
@@ -317,6 +318,12 @@
             if (u) { if (p) u.password = p; if (!isNaN(b)) u.balance = b; }
             else { DB.users.push({username:n, password:p||"123", balance:b||1000, role:"user", portfolio:{}, disabled:false}); }
         } else if (action === 'disable' && u) { u.disabled = !u.disabled; }
+        else if (action === 'delete' && u) {
+        if (u.role === 'admin') return alert("Cannot delete admin. To do that, submit a pull request on the GitHub page.");
+        if (!confirm("Delete user permanently?")) return;
+        DB.users = DB.users.filter(x => x.username !== n);
+        log(`Admin deleted user: ${n}`);
+    }
         await pushDB();
     }
     async function adminStockAction(action) {
