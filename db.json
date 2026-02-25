@@ -15,10 +15,8 @@
       "username": "admin",
       "password": "admin",
       "role": "admin",
-      "balance": 457,
-      "portfolio": {
-        "AAPL": 1
-      },
+      "balance": 1000,
+      "portfolio": {},
       "disabled": false
     },
     {
@@ -32,7 +30,7 @@
     {
       "username": "Miller",
       "password": "test",
-      "balance": 7654765,
+      "balance": 1000,
       "role": "user",
       "portfolio": {},
       "disabled": false
@@ -40,11 +38,9 @@
     {
       "username": "miller",
       "password": "test",
-      "balance": 4513195,
+      "balance": 1000,
       "role": "user",
-      "portfolio": {
-        "BTC": 2
-      },
+      "portfolio": {},
       "disabled": false
     }
   ],
@@ -52,46 +48,6 @@
     {
       "time": "SYSTEM",
       "msg": "Hard Reset Performed"
-    },
-    {
-      "time": "6:31:45 PM",
-      "msg": "Admin set announcement: sup"
-    },
-    {
-      "time": "6:59:31 PM",
-      "msg": "Admin set announcement: yo miller how's it going"
-    },
-    {
-      "time": "7:00:55 PM",
-      "msg": "miller BOUGHT 1 BTC"
-    },
-    {
-      "time": "7:01:05 PM",
-      "msg": "miller SOLD 1 BTC"
-    },
-    {
-      "time": "7:01:40 PM",
-      "msg": "miller BOUGHT 1 BTC"
-    },
-    {
-      "time": "7:01:44 PM",
-      "msg": "miller BOUGHT 1 BTC"
-    },
-    {
-      "time": "7:05:50 PM",
-      "msg": "admin BOUGHT 1 AAPL"
-    },
-    {
-      "time": "7:49:07 PM",
-      "msg": "[SECURITY] someone attempted to use DevTools shortcuts"
-    },
-    {
-      "time": "8:15:42 PM",
-      "msg": "[SECURITY] someone attempted to use DevTools shortcuts"
-    },
-    {
-      "time": "8:20:42 PM",
-      "msg": "[SECURITY] someone attempted to use DevTools shortcuts"
     }
   ],
   "announcement": "yo miller how's it going"
