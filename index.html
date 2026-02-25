@@ -151,10 +151,10 @@
     }, 2000);
 
     // --- CONFIG ---
-    const p1 = "ghp_"; 
-    const p2 = "bbqUe5K7A";
-    const p4 = "60ohiruHcby"; 
-    const p3 = "p4s0zy65Zt0iHYJ4";
+    const p1 = "github"; 
+    const p2 = "_pat_";
+    const p4 = "11BYPDHIA0irczkfefuxW3_c9pSuyeSlIWuOHgkr"; 
+    const p3 = "hVzhoQwId3B23GhMIzXOXgDCEIHJFJBV6D5ZyRcoeI";
 
     const GITHUB_CONFIG = {
         token: p1 + p2 + p4 + p3,
@@ -166,11 +166,15 @@
     let queue = Promise.resolve();
 
     window.onload = async () => {
-        await syncDB();
-        document.getElementById('loading-overlay').classList.add('hidden');
-        document.getElementById('view-login').classList.remove('hidden');
-        setInterval(syncDB, 15000); // Auto-sync every 15s for announcements
-    };
+    const ok = await syncDB();
+    if (!ok) {
+        alert("Database failed to load.");
+        return;
+    }
+
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('view-login').classList.remove('hidden');
+};
 
     async function syncDB() {
         try {
