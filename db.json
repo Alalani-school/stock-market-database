@@ -34,6 +34,14 @@
       "role": "user",
       "portfolio": {},
       "disabled": false
+    },
+    {
+      "username": "miller",
+      "password": "test",
+      "balance": 564,
+      "role": "user",
+      "portfolio": {},
+      "disabled": false
     }
   ],
   "logs": [
