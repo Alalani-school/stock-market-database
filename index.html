@@ -135,7 +135,10 @@
             return false;
         }
     };
-
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        reportSecurity("attempted to right click");
+    });
     // Detect if console is opened via window resizing
     let devtoolsOpen = false;
     const threshold = 160;
