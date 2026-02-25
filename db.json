@@ -20,6 +20,10 @@
     {
       "time": "1:59:01 PM",
       "msg": "[SECURITY] admin attempted to use DevTools shortcuts"
+    },
+    {
+      "time": "2:36:59 PM",
+      "msg": "[SECURITY] admin attempted to right click"
     }
   ],
   "announcement": "Opening Day"
