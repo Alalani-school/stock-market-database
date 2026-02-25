@@ -16,14 +16,6 @@
         "AAPL": 0
       },
       "disabled": false
-    },
-    {
-      "username": "someone",
-      "password": "test",
-      "balance": 1000,
-      "role": "user",
-      "portfolio": {},
-      "disabled": false
     }
   ],
   "logs": [
@@ -46,6 +38,10 @@
     {
       "time": "3:52:46 PM",
       "msg": "admin SOLD 1 AAPL"
+    },
+    {
+      "time": "4:01:28 PM",
+      "msg": "Admin deleted user: someone"
     }
   ],
   "announcement": "Opening Day"
