@@ -84,6 +84,10 @@
     {
       "time": "7:49:07 PM",
       "msg": "[SECURITY] someone attempted to use DevTools shortcuts"
+    },
+    {
+      "time": "8:15:42 PM",
+      "msg": "[SECURITY] someone attempted to use DevTools shortcuts"
     }
   ],
   "announcement": "yo miller how's it going"
