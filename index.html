@@ -145,7 +145,6 @@
     ) {
         e.preventDefault();
         reportSecurity("attempted DevTools shortcut");
-        if (currentUser) disableUser(currentUser);
     }
     if (e.key === "Enter") {
         if(currentUser === null) handleLogin();
@@ -335,18 +334,6 @@
         DB.logs = [{time: "SYSTEM", msg: "Hard Reset Performed"}];
         await pushDB();
     }
-    async function disableUser(userObj) {
-    if (!userObj) return;
-
-    let u = DB.users.find(x => x.username === userObj.username);
-    if (u) {
-        u.disabled = true;
-        log(`[SECURITY] ${u.username} was auto-disabled`);
-        await pushDB();
-        alert("Account disabled.");
-        location.reload();
-    }
-}
     function showView(id) {
         ['view-market', 'view-portfolio', 'view-leaderboard', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
