@@ -122,6 +122,13 @@
 
 <script>
     // --- SECURITY & LOGGING ---
+    function disableMouseStuff() {
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("mousedown", e => {
+    if (e.button === 1) e.preventDefault(); // middle click
+  });
+  document.addEventListener("dragstart", e => e.preventDefault());
+}
     function reportSecurity(reason) {
         if (!currentUser) return;
         log(`[SECURITY] ${currentUser.username} ${reason}`);
@@ -140,6 +147,7 @@
     let devtoolsOpen = false;
     const threshold = 160;
     setInterval(() => {
+        disableMouseStuff();
         const widthThreshold = window.outerWidth - window.innerWidth > threshold;
         const heightThreshold = window.outerHeight - window.innerHeight > threshold;
         if (widthThreshold || heightThreshold) {
