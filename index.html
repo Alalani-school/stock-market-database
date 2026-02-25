@@ -135,20 +135,22 @@
         pushDB();
     }
 
-   document.addEventListener("keydown", function (e) {
-  if (e.key === "Enter") {
-    if(currentUser === null) handleLogin();
-  }
-});
+    document.addEventListener("keydown", function(e){
+    const forbidden = ["F12","I","J","C","U"];
 
-    document.onkeydown = function(e) {
-        const forbidden = [123, 73, 74, 67, 85]; // F12, I, J, C, U
-        if (forbidden.includes(e.keyCode) && (e.ctrlKey || e.shiftKey || e.keyCode == 123)) {
-            reportSecurity("attempted to use DevTools shortcuts");
-            if(currentUser !== null) disableUser(currentUser);
-            return false;
-        }
-    };
+    if (
+        e.key === "F12" ||
+        (e.ctrlKey && forbidden.includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.shiftKey && ["I","J","C"].includes(e.key.toUpperCase()))
+    ) {
+        e.preventDefault();
+        reportSecurity("attempted DevTools shortcut");
+        if (currentUser) disableUser(currentUser);
+    }
+    if (e.key === "Enter") {
+        if(currentUser === null) handleLogin();
+      }
+});
 
     // Detect if console is opened via window resizing
     let devtoolsOpen = false;
@@ -333,11 +335,18 @@
         DB.logs = [{time: "SYSTEM", msg: "Hard Reset Performed"}];
         await pushDB();
     }
-    async function disableUser(user) {
-        let u = DB.users.find(x => x.username === user);
-        if (u) {u.disabled = true; }
+    async function disableUser(userObj) {
+    if (!userObj) return;
+
+    let u = DB.users.find(x => x.username === userObj.username);
+    if (u) {
+        u.disabled = true;
+        log(`[SECURITY] ${u.username} was auto-disabled`);
         await pushDB();
+        alert("Account disabled.");
+        location.reload();
     }
+}
     function showView(id) {
         ['view-market', 'view-portfolio', 'view-leaderboard', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
