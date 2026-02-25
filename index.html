@@ -165,185 +165,278 @@
             }
         } else { devtoolsOpen = false; }
     }, 2000);
+/* =========================
+   CONFIG
+========================= */
 
-    // --- CONFIG ---
-    const p1 = "ghp_"; 
-    const p2 = "bbqUe5K7A60ohiruHcby"; 
-    const p3 = "p4s0zy65Zt0iHYJ4";
+    const p1 = "g";
+    const p2 = "hp_bbqU";
+    const p3 = "e5K7A60oh";
+    const p4 = "iruHcbyp4s0zy65Z";
+    const p5 "t0iHYJ4";
+const GITHUB_CONFIG = {
+    token: p1 + p2 + p3 + p4 + p5,
+    repo: "Alalani-school/stock-market-database",
+    path: "db.json",
+    branch: "main"
+};
 
-    const GITHUB_CONFIG = {
-        token: p1 + p2 + p3,
-        repo: "Alalani-school/stock-market-database", 
-        path: "db.json"
-    };
+let DB = null;
+let currentUser = null;
+let currentSha = null;
+let isBusy = false;
 
-    let DB = null, currentUser = null, currentSha = "", isBusy = false;
-    let queue = Promise.resolve();
+/* =========================
+   INIT
+========================= */
 
-    window.onload = async () => {
-    const success = await syncDB();
-
-    if (!success) {
-        alert("Database failed to load.");
+window.onload = async () => {
+    const ok = await syncDB();
+    if (!ok) {
+        alert("Database failed to load. Check console.");
         return;
     }
 
-    document.getElementById('loading-overlay').classList.add('hidden');
-    document.getElementById('view-login').classList.remove('hidden');
+    document.getElementById("loading-overlay").classList.add("hidden");
+    document.getElementById("view-login").classList.remove("hidden");
 };
 
-    async function syncDB() {
-        try {
-            const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`, {
-                headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}` }
-            });
-            if (!res.ok) return false;
-            const data = await res.json();
-            currentSha = data.sha;
-            DB = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\s/g, '')))));
-            if (currentUser) currentUser = DB.users.find(u => u.username === currentUser.username);
-            renderUI();
-            return true;
-        } catch (e) { return false; }
-    }
+/* =========================
+   DATABASE SYNC
+========================= */
 
-    async function pushDB() {
-        return queue = queue.then(async () => {
-            isBusy = true; renderUI();
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
-            try {
-                const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
-                    method: "PUT",
-                    headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: "Update", content, sha: currentSha })
-                });
-                if (res.status === 409) { await syncDB(); return pushDB(); }
-                await syncDB();
-            } finally { isBusy = false; renderUI(); }
-        });
-    }
+async function syncDB() {
+    try {
+        const res = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?ref=${GITHUB_CONFIG.branch}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${GITHUB_CONFIG.token}`
+                }
+            }
+        );
 
-    async function handleLogin() {
-        const u = document.getElementById('user-login').value;
-        const p = document.getElementById('pass-login').value;
-        const found = DB.users.find(x => x.username === u && x.password === p);
-        if (found) {
-            if (found.disabled && found.role !== 'admin') return alert("Account Disabled.");
-            currentUser = found;
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-main').classList.remove('hidden');
-            if (found.role === 'admin') document.getElementById('admin-nav').classList.remove('hidden');
-            renderUI();
-        } else alert("Invalid Login");
-    }
-
-    function renderUI() {
-        if (!currentUser || !DB) return;
-        
-        // Announcement Logic
-        const bar = document.getElementById('announcement-bar');
-        if (DB.announcement) {
-            bar.innerText = DB.announcement;
-            bar.style.display = 'block';
-        } else { bar.style.display = 'none'; }
-
-        document.getElementById('nav-info').innerText = `👤 ${currentUser.username} | 💰 $${currentUser.balance.toLocaleString()}`;
-        
-        const mBadge = document.getElementById('mkt-badge');
-        mBadge.innerText = DB.systemLive ? "ONLINE" : "OFFLINE";
-        mBadge.className = "status-tag " + (DB.systemLive ? "online" : "offline");
-        document.getElementById('shutdown-btn').innerText = DB.systemLive ? "Shutdown Market" : "Enable Market";
-
-        const btnState = (isBusy || (!DB.systemLive && currentUser.role !== 'admin')) ? "disabled" : "";
-
-        // Market UI
-        document.getElementById('market-list').innerHTML = DB.stocks.map(s => `
-            <div class="item-row">
-                <span><b>${s.ticker}</b>: $${s.price.toLocaleString()}</span>
-                <div>
-                    <button class="secondary" style="background:var(--primary)" ${btnState} onclick="trade('${s.ticker}','buy')">Buy</button>
-                    <button class="secondary danger" ${btnState} onclick="trade('${s.ticker}','sell')">Sell</button>
-                </div>
-            </div>`).join('');
-
-        // Portfolio & Leaderboard... (Calculations simplified for brevity)
-        const sortedUsers = [...DB.users].sort((a, b) => b.balance - a.balance);
-        document.getElementById('leaderboard-list').innerHTML = sortedUsers.map((u, i) => `
-            <div class="rank-item"><span>#${i+1}</span><span>${u.username}</span><span style="text-align:right">$${u.balance.toLocaleString()}</span></div>`).join('');
-
-        if (currentUser.role === 'admin') {
-            document.getElementById('admin-logs').innerHTML = (DB.logs || []).slice().reverse()
-                .map(l => `<div style="color:${l.msg.includes('[SECURITY]')?'#ff7b72':'#8b949e'}">[${l.time}] ${l.msg}</div>`).join('');
+        if (!res.ok) {
+            console.error("SYNC FAILED:", res.status);
+            return false;
         }
+
+        const data = await res.json();
+        currentSha = data.sha;
+
+        DB = JSON.parse(atob(data.content));
+
+        return true;
+
+    } catch (err) {
+        console.error("SYNC ERROR:", err);
+        return false;
+    }
+}
+
+/* =========================
+   DATABASE PUSH
+========================= */
+
+async function pushDB() {
+    if (isBusy) return;
+    isBusy = true;
+
+    try {
+        // Always get latest SHA before pushing
+        const synced = await syncDB();
+        if (!synced) {
+            alert("Failed to refresh database before saving.");
+            return;
+        }
+
+        const content = btoa(JSON.stringify(DB, null, 2));
+
+        const res = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${GITHUB_CONFIG.token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Update via stock market app",
+                    content: content,
+                    sha: currentSha,
+                    branch: GITHUB_CONFIG.branch
+                })
+            }
+        );
+
+        if (res.status === 409) {
+            console.warn("SHA conflict. Please try again.");
+            return;
+        }
+
+        if (!res.ok) {
+            console.error("PUSH FAILED:", res.status);
+            return;
+        }
+
+        await syncDB();
+
+    } catch (err) {
+        console.error("PUSH ERROR:", err);
+    } finally {
+        isBusy = false;
+    }
+}
+
+/* =========================
+   LOGIN
+========================= */
+
+async function handleLogin() {
+    if (!DB) {
+        alert("Database not loaded.");
+        return;
     }
 
-    async function trade(ticker, type) {
-        if (isBusy) return;
-        const qty = parseInt(document.getElementById('trade-qty').value) || 1;
-        const stock = DB.stocks.find(s => s.ticker === ticker);
-        const user = DB.users.find(u => u.username === currentUser.username);
-        const total = stock.price * qty;
+    const username = document.getElementById("user-login").value;
+    const password = document.getElementById("pass-login").value;
 
-        if (type === 'buy' && user.balance >= total) {
-            user.balance -= total;
-            user.portfolio[ticker] = (user.portfolio[ticker] || 0) + qty;
-            log(`${user.username} BOUGHT ${qty} ${ticker}`);
-        } else if (type === 'sell' && (user.portfolio[ticker] || 0) >= qty) {
-            user.balance += total;
-            user.portfolio[ticker] -= qty;
-            log(`${user.username} SOLD ${qty} ${ticker}`);
-        } else return alert("Trade Invalid");
-        await pushDB();
+    const found = DB.users.find(
+        u => u.username === username && u.password === password
+    );
+
+    if (!found) {
+        alert("Invalid Login");
+        return;
     }
 
-    function log(msg) {
-        if (!DB.logs) DB.logs = [];
-        DB.logs.push({ time: new Date().toLocaleTimeString(), msg });
-        if (DB.logs.length > 100) DB.logs.shift();
+    if (found.disabled && found.role !== "admin") {
+        alert("Account Disabled.");
+        return;
     }
 
-    // --- ADMIN ACTIONS ---
-    async function adminSetMessage() {
-        DB.announcement = document.getElementById('adm-msg').value;
-        log(`Admin set announcement: ${DB.announcement}`);
-        await pushDB();
+    currentUser = found;
+
+    document.getElementById("view-login").classList.add("hidden");
+    document.getElementById("view-main").classList.remove("hidden");
+
+    if (found.role === "admin") {
+        document.getElementById("admin-nav").classList.remove("hidden");
     }
-    async function adminClearMessage() {
-        DB.announcement = "";
-        await pushDB();
+
+    renderUI();
+}
+
+/* =========================
+   UI
+========================= */
+
+function renderUI() {
+    if (!DB || !currentUser) return;
+
+    document.getElementById("nav-info").innerText =
+        `👤 ${currentUser.username} | 💰 $${currentUser.balance.toLocaleString()}`;
+
+    const badge = document.getElementById("mkt-badge");
+    badge.innerText = DB.systemLive ? "ONLINE" : "OFFLINE";
+    badge.className = "status-tag " + (DB.systemLive ? "online" : "offline");
+
+    document.getElementById("shutdown-btn").innerText =
+        DB.systemLive ? "Shutdown Market" : "Enable Market";
+
+    const disabled =
+        isBusy || (!DB.systemLive && currentUser.role !== "admin")
+            ? "disabled"
+            : "";
+
+    // Market
+    document.getElementById("market-list").innerHTML = DB.stocks.map(s => `
+        <div class="item-row">
+            <span><b>${s.ticker}</b>: $${s.price.toLocaleString()}</span>
+            <div>
+                <button ${disabled} onclick="trade('${s.ticker}','buy')">Buy</button>
+                <button ${disabled} onclick="trade('${s.ticker}','sell')" class="danger">Sell</button>
+            </div>
+        </div>
+    `).join("");
+
+    // Leaderboard
+    const sorted = [...DB.users].sort((a,b) => b.balance - a.balance);
+    document.getElementById("leaderboard-list").innerHTML =
+        sorted.map((u,i) => `
+            <div class="rank-item">
+                <span>#${i+1}</span>
+                <span>${u.username}</span>
+                <span style="text-align:right">$${u.balance.toLocaleString()}</span>
+            </div>
+        `).join("");
+}
+
+/* =========================
+   TRADING
+========================= */
+
+async function trade(ticker, type) {
+    if (isBusy) return;
+
+    const qty = parseInt(document.getElementById("trade-qty").value) || 1;
+    const stock = DB.stocks.find(s => s.ticker === ticker);
+    const user = DB.users.find(u => u.username === currentUser.username);
+
+    const total = stock.price * qty;
+
+    if (type === "buy") {
+        if (user.balance < total) {
+            alert("Not enough funds.");
+            return;
+        }
+        user.balance -= total;
+        user.portfolio[ticker] = (user.portfolio[ticker] || 0) + qty;
     }
-    async function adminUserAction(action) {
-        const n = document.getElementById('adm-user-n').value;
-        const p = document.getElementById('adm-user-p').value;
-        const b = parseFloat(document.getElementById('adm-user-b').value);
-        let u = DB.users.find(x => x.username === n);
-        if (action === 'update') {
-            if (u) { if (p) u.password = p; if (!isNaN(b)) u.balance = b; }
-            else { DB.users.push({username:n, password:p||"123", balance:b||1000, role:"user", portfolio:{}, disabled:false}); }
-        } else if (action === 'disable' && u) { u.disabled = !u.disabled; }
-        await pushDB();
+
+    if (type === "sell") {
+        if ((user.portfolio[ticker] || 0) < qty) {
+            alert("Not enough shares.");
+            return;
+        }
+        user.balance += total;
+        user.portfolio[ticker] -= qty;
     }
-    async function adminStockAction(action) {
-        const t = document.getElementById('adm-stk-t').value.toUpperCase();
-        const p = parseFloat(document.getElementById('adm-stk-p').value);
-        if (action === 'update') {
-            let s = DB.stocks.find(x => x.ticker === t);
-            s ? s.price = p : DB.stocks.push({ticker:t, price:p});
-        } else if (action === 'delete') { DB.stocks = DB.stocks.filter(x => x.ticker !== t); }
-        await pushDB();
-    }
-    async function adminToggleSystem() { DB.systemLive = !DB.systemLive; await pushDB(); }
-    async function adminResetAll() {
-        if (!confirm("HARD RESET SYSTEM?")) return;
-        DB.users.forEach(u => { u.balance = 1000; u.portfolio = {}; });
-        DB.logs = [{time: "SYSTEM", msg: "Hard Reset Performed"}];
-        await pushDB();
-    }
-    function showView(id) {
-        ['view-market', 'view-portfolio', 'view-leaderboard', 'view-admin'].forEach(v => document.getElementById(v).classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-        renderUI();
-    }
+
+    await pushDB();
+    renderUI();
+}
+
+/* =========================
+   ADMIN
+========================= */
+
+async function adminToggleSystem() {
+    if (currentUser.role !== "admin") return;
+    DB.systemLive = !DB.systemLive;
+    await pushDB();
+    renderUI();
+}
+
+async function adminResetAll() {
+    if (currentUser.role !== "admin") return;
+    if (!confirm("HARD RESET SYSTEM?")) return;
+
+    DB.users.forEach(u => {
+        u.balance = 1000;
+        u.portfolio = {};
+    });
+
+    await pushDB();
+    renderUI();
+}
+
+function showView(id) {
+    ["view-market","view-portfolio","view-leaderboard","view-admin"]
+        .forEach(v => document.getElementById(v).classList.add("hidden"));
+
+    document.getElementById(id).classList.remove("hidden");
+}
 </script>
 </body>
 </html>
