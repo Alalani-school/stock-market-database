@@ -155,8 +155,8 @@
     // Detect if console is opened via window resizing
     let devtoolsOpen = false;
     const threshold = 160;
+    disableMouseStuff();
     setInterval(() => {
-        disableMouseStuff();
         const widthThreshold = window.outerWidth - window.innerWidth > threshold;
         const heightThreshold = window.outerHeight - window.innerHeight > threshold;
         if (widthThreshold || heightThreshold) {
