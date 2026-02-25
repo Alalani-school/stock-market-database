@@ -127,6 +127,7 @@
         if (!currentUser) return;
         log(`[SECURITY] ${currentUser.username} ${reason}`);
         pushDB();
+        renderUI();
     }
 
     document.onkeydown = function(e) {
@@ -340,7 +341,7 @@
         await pushDB();
         renderUI();
     }
-    async function adminToggleSystem() { DB.systemLive = !DB.systemLive; await pushDB(); }
+    async function adminToggleSystem() { DB.systemLive = !DB.systemLive; await pushDB(); renderUI(); }
     async function adminResetAll() {
         if (!confirm("HARD RESET SYSTEM?")) return;
         DB.users.forEach(u => { u.balance = 1000; u.portfolio = {}; });
