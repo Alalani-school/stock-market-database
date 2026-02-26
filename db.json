@@ -4,10 +4,6 @@
     {
       "ticker": "AAPL",
       "price": 543
-    },
-    {
-      "ticker": "",
-      "price": null
     }
   ],
   "users": [
