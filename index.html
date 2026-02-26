@@ -277,6 +277,25 @@
             document.getElementById('admin-logs').innerHTML = (DB.logs || []).slice().reverse()
                 .map(l => `<div style="color:${l.msg.includes('[SECURITY]')?'#ff7b72':'#8b949e'}">[${l.time}] ${l.msg}</div>`).join('');
         }
+
+        // Portfolio UI
+const portfolioList = document.getElementById('portfolio-list');
+
+if (!currentUser.portfolio || Object.keys(currentUser.portfolio).length === 0) {
+    portfolioList.innerHTML = "<p>No assets owned.</p>";
+} else {
+    portfolioList.innerHTML = Object.entries(currentUser.portfolio)
+        .filter(([_, qty]) => qty > 0)
+        .map(([ticker, qty]) => {
+            const stock = DB.stocks.find(s => s.ticker === ticker);
+            const value = stock ? stock.price * qty : 0;
+            return `
+                <div class="item-row">
+                    <span><b>${ticker}</b> × ${qty}</span>
+                    <span>$${value.toLocaleString()}</span>
+                </div>`;
+        }).join('');
+}
     }
 
     async function trade(ticker, type) {
