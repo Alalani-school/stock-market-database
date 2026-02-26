@@ -11,9 +11,9 @@
       "username": "admin",
       "password": "admin",
       "role": "admin",
-      "balance": 457,
+      "balance": 1000,
       "portfolio": {
-        "AAPL": 1
+        "AAPL": 0
       },
       "disabled": false
     }
@@ -50,6 +50,10 @@
     {
       "time": "7:52:08 PM",
       "msg": "admin BOUGHT 1 AAPL"
+    },
+    {
+      "time": "7:57:31 PM",
+      "msg": "admin SOLD 1 AAPL"
     }
   ],
   "announcement": "Opening Day"
