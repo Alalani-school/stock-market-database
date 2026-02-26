@@ -74,6 +74,10 @@
     {
       "time": "8:42:11 AM",
       "msg": "admin BOUGHT 1 AAPL"
+    },
+    {
+      "time": "11:45:36 AM",
+      "msg": "[SECURITY] admin attempted to right click"
     }
   ],
   "announcement": "Opening Day"
