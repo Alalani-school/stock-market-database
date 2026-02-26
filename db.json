@@ -16,6 +16,14 @@
         "AAPL": 0
       },
       "disabled": false
+    },
+    {
+      "username": "test",
+      "password": "test",
+      "balance": 500,
+      "role": "user",
+      "portfolio": {},
+      "disabled": false
     }
   ],
   "logs": [
