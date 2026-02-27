@@ -210,20 +210,40 @@
     }
 }
 
-    async function pushDB() {
-        return queue = queue.then(async () => {
-            isBusy = true; renderUI();
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
-            try {
-                const res = await fetch(`https://api.github.com/repos/alalani-school/stock-market-database/contents/db.json`, {
-                    method: "PUT",
-                    headers: { "Authorization": `Bearer ${GITHUB_CONFIG.token}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: "Update", content, sha: currentSha })
-                });
-                if (res.status === 409) { await syncDB(); return pushDB(); }
-            } finally { isBusy = false; renderUI(); }
-        });
-    }
+   async function pushDB() {
+    return queue = queue.then(async () => {
+        isBusy = true; renderUI();
+
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(DB, null, 2))));
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/alalani-school/stock-market-database/contents/db.json`, {
+                method: "PUT",
+                headers: { 
+                    "Authorization": `Bearer ${GITHUB_CONFIG.token}`, 
+                    "Content-Type": "application/json" 
+                },
+                body: JSON.stringify({ 
+                    message: "Update", 
+                    content, 
+                    sha: currentSha 
+                })
+            });
+
+            if (res.status === 409) {
+                await syncDB();
+                return pushDB();
+            }
+
+            const data = await res.json();
+            currentSha = data.content.sha; // 🔥 THIS LINE FIXES IT
+
+        } finally {
+            isBusy = false; 
+            renderUI();
+        }
+    });
+}
 
     async function handleLogin() {
         const u = document.getElementById('user-login').value;
