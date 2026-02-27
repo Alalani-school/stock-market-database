@@ -94,7 +94,11 @@
     {
       "time": "12:54:54 PM",
       "msg": "[SECURITY] admin attempted to use DevTools shortcuts"
+    },
+    {
+      "time": "12:55:38 PM",
+      "msg": "Admin set announcement: Log out and then log back in to check your trades persist"
     }
   ],
-  "announcement": "Opening Day"
+  "announcement": "Log out and then log back in to check your trades persist"
 }
